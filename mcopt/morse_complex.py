@@ -5,7 +5,7 @@ def MorseSmaleComplex(
   input : vtk.vtkAlgorithm, 
   fieldname='data', 
   persistence_threshold=0.05
-):
+) -> ttk.ttkMorseSmaleComplex :
   persistence_diagram = ttk.ttkPersistenceDiagram()
   persistence_diagram.SetInputConnection(input.GetOutputPort())
   persistence_diagram.SetInputArrayToProcess(0,0,0,0, fieldname)
@@ -21,7 +21,7 @@ def MorseSmaleComplex(
   persistent_pairs = vtk.vtkThreshold()
   persistent_pairs.SetInputConnection(critical_pairs.GetOutputPort())
   persistent_pairs.SetInputArrayToProcess(
-    0, 0, 0, vtk.vtkDataObject.FIELD_ASSOCIATION_CELLS, "PairIdentifier"
+    0, 0, 0, vtk.vtkDataObject.FIELD_ASSOCIATION_CELLS, "Persistence"
   )
   persistent_pairs.SetThresholdFunction(vtk.vtkThreshold.THRESHOLD_BETWEEN)
   persistent_pairs.SetLowerThreshold(persistence_threshold)
