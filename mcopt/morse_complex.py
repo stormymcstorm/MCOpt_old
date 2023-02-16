@@ -3,12 +3,12 @@ import vtk
 
 def MorseSmaleComplex(
   input : vtk.vtkAlgorithm, 
-  fieldname='data', 
+  field_name='data', 
   persistence_threshold=0.05
 ) -> ttk.ttkMorseSmaleComplex :
   persistence_diagram = ttk.ttkPersistenceDiagram()
   persistence_diagram.SetInputConnection(input.GetOutputPort())
-  persistence_diagram.SetInputArrayToProcess(0,0,0,0, fieldname)
+  persistence_diagram.SetInputArrayToProcess(0,0,0,0, field_name)
 
   critical_pairs = vtk.vtkThreshold()
   critical_pairs.SetInputConnection(persistence_diagram.GetOutputPort())
@@ -28,12 +28,30 @@ def MorseSmaleComplex(
 
   simplification = ttk.ttkTopologicalSimplification()
   simplification.SetInputConnection(0, input.GetOutputPort())
-  simplification.SetInputArrayToProcess(0,0,0,0,fieldname)
+  simplification.SetInputArrayToProcess(0,0,0,0,field_name)
   simplification.SetInputConnection(1, persistent_pairs.GetOutputPort())
 
   mc = ttk.ttkMorseSmaleComplex()
   mc.SetInputConnection(simplification.GetOutputPort())
-  mc.SetInputArrayToProcess(0,0,0,0, fieldname)
+  mc.SetInputArrayToProcess(0,0,0,0, field_name)
 
   return mc
 
+def MorseComplex(
+  input : vtk.vtkAlgorithm, 
+  field_name='data', 
+  persistence_threshold=0.05,
+  ascending=True,
+):
+  mc = MorseSmaleComplex(input, field_name=field_name, persistence_threshold=persistence_threshold)
+
+  mc.SetComputeCriticalPoints(True)
+  mc.SetComputeAscendingSeparatrices1(False)
+  mc.SetComputeAscendingSeparatrices2(False)
+
+  mc.SetComputeAscendingSegmentation(ascending)
+  mc.SetComputeDescendingSegmentation(not ascending)
+  mc.SetComputeDescendingSeparatrices1(ascending)
+  mc.SetComputeDescendingSeparatrices2(not ascending)
+
+  return mc

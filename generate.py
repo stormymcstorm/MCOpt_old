@@ -13,7 +13,7 @@ from mcopt.util.data import (
   Tetrahedralize,
   Warp
 )
-from mcopt.morse_complex import MorseSmaleComplex
+from mcopt.morse_complex import (MorseSmaleComplex, MorseComplex)
 
 DATA_DIR = 'data'
 
@@ -54,7 +54,7 @@ if __name__ == '__main__':
   terrain1 = gen_terrain(data1)
   save_data(terrain1.GetOutputPort(), "terrain1", type="vtu")
 
-  complex1 = MorseSmaleComplex(terrain1, persistence_threshold=0.1)
+  complex1 = MorseComplex(terrain1, persistence_threshold=0.1)
   save_data(complex1.GetOutputPort(0), "critical_points1", type="vtp")
   save_data(complex1.GetOutputPort(1), "separatrices1", type="vtp")
   save_data(complex1.GetOutputPort(3), "segmentation1", type="vtu")
@@ -63,9 +63,8 @@ if __name__ == '__main__':
   terrain2 = gen_terrain(data2)
   save_data(terrain2.GetOutputPort(), "terrain2", type="vtu")
 
-  complex2 = MorseSmaleComplex(terrain2, persistence_threshold=0.1)
+  complex2 = MorseComplex(terrain2, persistence_threshold=0.1)
   save_data(complex2.GetOutputPort(0), "critical_points2", type="vtp")
   save_data(complex2.GetOutputPort(1), "separatrices2", type="vtp")
   save_data(complex2.GetOutputPort(3), "segmentation2", type="vtu")
-
 
