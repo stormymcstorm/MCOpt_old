@@ -2,6 +2,3 @@
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
-[project]
-name = "mcopt"
-version = "0.0.1"
