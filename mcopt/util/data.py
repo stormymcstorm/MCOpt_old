@@ -1,26 +1,10 @@
+"""
+Utilities for generating datasets
+"""
+
 from typing import List
 import numpy as np
 from skimage import filters
-import vtk
-from vtk.util.numpy_support import numpy_to_vtk
-
-def array_to_plane(arr: np.ndarray, field_name="data") -> vtk.vtkPlaneSource :
-  assert(arr.ndim == 2)
-
-  plane = vtk.vtkPlaneSource()
-  plane.SetResolution(arr.shape[0] - 1, arr.shape[1] - 1)
-  plane.SetOrigin([0, 0, 0])
-  plane.SetPoint1([arr.shape[0], 0, 0])
-  plane.SetPoint2([0, arr.shape[0], 0])
-  plane.Update()
-
-  scalars = numpy_to_vtk(arr.ravel(), deep = True, array_type=vtk.VTK_DOUBLE)
-
-  scalars.SetName(field_name)
-
-  plane.GetOutput().GetPointData().SetScalars(scalars)
-
-  return plane
 
 # TODO: better docs
 
@@ -72,18 +56,3 @@ def Combine(layers : List[np.ndarray], weights = None) -> np.ndarray:
     weights = np.ones(len(layers), dtype=float) / len(layers)
 
   return np.array(layers).T.dot(weights).T
-
-def Tetrahedralize(input: vtk.vtkAlgorithm, field_name="data"):
-  tetra = vtk.vtkDataSetTriangleFilter()
-  tetra.SetInputConnection(input.GetOutputPort())
-  tetra.SetInputArrayToProcess(0,0,0,0,field_name)
-
-  return tetra
-
-def Warp(input: vtk.vtkAlgorithm, scale_factor, field_name="data"):
-  warp = vtk.vtkWarpScalar()
-  warp.SetInputConnection(input.GetOutputPort())
-  warp.SetInputArrayToProcess(0,0,0,0,field_name)
-  warp.SetScaleFactor(scale_factor)
-
-  return warp
