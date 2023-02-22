@@ -28,14 +28,20 @@ def make_dir(new_dir):
 def save_data(output, name, type='vtu'):
   if type == 'vtu':
     writer = vtk.vtkXMLUnstructuredGridWriter()
+    writer.SetInputConnection(output)
+    writer.SetFileName(os.path.join(DATA_DIR, name + "." + type))
+    writer.Write()
   elif type == 'vtp':
     writer = vtk.vtkXMLPolyDataWriter()
+    writer.SetInputConnection(output)
+    writer.SetFileName(os.path.join(DATA_DIR, name + "." + type))
+    writer.Write()
+  elif type == 'csv':
+    output.to_csv(os.path.join(DATA_DIR, name + "." + type))
   else:
     raise "Unknown data type: " + type
 
-  writer.SetInputConnection(output)
-  writer.SetFileName(os.path.join(DATA_DIR, name + "." + type))
-  writer.Write()
+  
 
 def gen_terrain(data: np.ndarray, scale_factor=50):
   plane = Plane(data)
@@ -44,7 +50,7 @@ def gen_terrain(data: np.ndarray, scale_factor=50):
   return Warp(tetra.GetOutputPort(), scale_factor)
 
 # if __name__ == '__main__':
-if True:
+if True:  
   make_dir(DATA_DIR)
 
   rng = np.random.default_rng(42)
@@ -61,7 +67,10 @@ if True:
 
   complex1 = MorseComplex.create(terrain1.GetOutputPort(), persistence_threshold=0.1)
   save_data(complex1.critical_points, "critical_points1", type="vtp")
+  save_data(complex1.critical_points_point_data, "critical_points_point_data1", type="csv")
   save_data(complex1.separatrices, "separatrices1", type="vtp")
+  save_data(complex1.separatrices_cell_data, "separatrices_cell_data1", type="csv")
+  save_data(complex1.separatrices_point_data, "separatrices_point_data1", type="csv")
   save_data(complex1.segmentation, "segmentation1", type="vtu")
 
   data2 = data1 + Smooth(GaussianNoise(rng=rng) * 0.2)
@@ -70,6 +79,8 @@ if True:
 
   complex2 = MorseComplex.create(terrain2.GetOutputPort(), persistence_threshold=0.1)
   save_data(complex2.critical_points, "critical_points2", type="vtp")
+  save_data(complex2.critical_points_point_data, "critical_points_point_data2", type="csv")
   save_data(complex2.separatrices, "separatrices2", type="vtp")
+  save_data(complex2.separatrices_cell_data, "separatrices_cell_data2", type="csv")
+  save_data(complex2.separatrices_point_data, "separatrices_point_data2", type="csv")
   save_data(complex2.segmentation, "segmentation2", type="vtu")
-

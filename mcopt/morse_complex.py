@@ -52,6 +52,59 @@ def _make_complex(
 
   return complex
 
+def _cell_data(poly):
+  adapter = dsa.WrapDataObject(poly)
+    
+  cell_data = {}
+  
+  for k in adapter.CellData.keys():
+    cell_data[k] = adapter.CellData[k]
+    
+  cells = pd.DataFrame(cell_data)
+  
+  cells.index.names = ['Cell Id']
+  cells['Cell Type'] = pd.Series(dtype="Int64")
+  
+  id_list = vtk.vtkIdList()
+
+  for cell_id in range(cells.shape[0]):
+    poly.GetCellPoints(cell_id, id_list)
+    
+    for i in range(id_list.GetNumberOfIds()):
+      k = 'Point Index ' + str(i)
+      
+      if k not in cells:
+        cells[k] = pd.Series(dtype="Int64")
+      
+      cells.at[cell_id, k] = id_list.GetId(i)
+      
+    cells.at[cell_id, 'Cell Type'] = poly.GetCellType(cell_id)
+  
+  return cells
+
+def _point_data(poly):
+  adapter = dsa.WrapDataObject(poly)
+    
+  point_data = {}
+
+  for k in adapter.PointData.keys():
+    point_data[k] = adapter.PointData[k]
+    
+  points = pd.DataFrame(point_data)
+  points.index.names = ['Point ID']
+  points['Points_0'] = pd.Series(dtype="Float64")
+  points['Points_1'] = pd.Series(dtype="Float64")
+  points['Points_2'] = pd.Series(dtype="Float64")
+  
+  for point_id in range(points.shape[0]):
+    x, y, z = poly.GetPoint(point_id)
+    
+    points.at[point_id, 'Points_0'] = x
+    points.at[point_id, 'Points_1'] = y
+    points.at[point_id, 'Points_2'] = z
+  
+  return points
+
 class MorseSmaleComplex:
   @staticmethod
   def create(
@@ -60,6 +113,8 @@ class MorseSmaleComplex:
     persistence_threshold=0.05
   ):
     complex = _make_complex(input, field_name, persistence_threshold)
+    
+    complex.Update()
     
     return MorseSmaleComplex(
       complex.GetOutputPort(0), 
@@ -83,63 +138,34 @@ class MorseSmaleComplex:
     self.critical_points = critical_points
     self.separatrices = separatrices
     self.segmentation = segmentation   
+    
+  @property
+  def critical_points_data(self):
+    return self.critical_points.GetProducer().GetOutput(self.critical_points.GetIndex())
+  
+  @property
+  def separatrices_data(self):
+    return self.separatrices.GetProducer().GetOutput(self.separatrices.GetIndex())
+  
+  @property
+  def segmentation_data(self):
+    return self.segmentation.GetProducer().GetOutput(self.segmentation.GetIndex())
+
+  # Tries to mimic the output of exporting from paraview
+  @cached_property
+  def separatrices_cell_data(self) -> pd.DataFrame:
+    return _cell_data(self.separatrices_data)
+    
+  
+  # Tries to mimic the output of exporting from paraview
+  @cached_property
+  def separatrices_point_data(self) -> pd.DataFrame:
+    return _point_data(self.separatrices_data)
+    
 
   @cached_property
-  def cell_data(self) -> pd.DataFrame:
-    poly = self.separatrices.GetOutput()
-    adapter = dsa.WrapDataObject(poly)
-    
-    cell_data = {}
-    
-    for k in adapter.CellData.keys():
-      cell_data[k] = adapter.CellData[k]
-      
-    cells = pd.DataFrame(cell_data)
-    
-    cells.index.names = ['Cell Id']
-    cells['Cell Type'] = pd.Series(dtype="Int64")
-    
-    id_list = vtk.vtkIdList()
-  
-    for cell_id in range(cells.shape[0]):
-      poly.GetCellPoints(cell_id, id_list)
-      
-      for i in range(id_list.GetNumberOfIds()):
-        k = 'Point Index ' + str(i)
-        
-        if k not in cells:
-          cells[k] = pd.Series(dtype="Int64")
-        
-        cells.at[cell_id, k] = id_list.GetId(i)
-        
-      cells.at[cell_id, 'Cell Type'] = poly.GetCellType(cell_id)
-    
-    return cells
-  
-  @cached_property
-  def point_data(self) -> pd.DataFrame:
-    poly = self.separatrices.GetOutput()
-    adapter = dsa.WrapDataObject(poly)
-    
-    point_data = {}
-  
-    for k in adapter.PointData.keys():
-      point_data[k] = adapter.PointData[k]
-      
-    points = pd.DataFrame(point_data)
-    points.index.names = ['Point ID']
-    points['Points_0'] = pd.Series(dtype="Float64")
-    points['Points_1'] = pd.Series(dtype="Float64")
-    points['Points_2'] = pd.Series(dtype="Float64")
-    
-    for point_id in range(points.shape[0]):
-      x, y, z = poly.GetPoint(point_id)
-      
-      points.at[point_id, 'Points_0'] = x
-      points.at[point_id, 'Points_1'] = y
-      points.at[point_id, 'Points_2'] = z
-    
-    return points
+  def critical_points_point_data(self) -> pd.DataFrame:
+    return _point_data(self.critical_points_data)
 
 class MorseComplex(MorseSmaleComplex):
   @staticmethod
