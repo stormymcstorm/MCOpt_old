@@ -22,7 +22,12 @@ class MorseGraph(nx.Graph):
     cell_map = {}
     
     def map_point(point_id):
-      cell_id = separatrices_points.loc[point_id, 'CellId']
+      point_data = separatrices_points.loc[point_id]
+      
+      if point_data['ttkMaskScalarField'] != 0:
+        return point_id
+      
+      cell_id = point_data['CellId']
       
       if cell_id in cell_map:
         return cell_map[cell_id]
