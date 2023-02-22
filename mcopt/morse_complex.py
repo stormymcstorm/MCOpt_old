@@ -120,7 +120,7 @@ class MorseSmaleComplex:
       complex.GetOutputPort(0), 
       complex.GetOutputPort(1), 
       complex.GetOutputPort(3), 
-      _complex = complex # Prevent deletion of complex
+      _save = complex # Prevent deletion of complex
     )
   
   critical_points : vtk.vtkAlgorithmOutput
@@ -132,9 +132,9 @@ class MorseSmaleComplex:
     critical_points : vtk.vtkAlgorithmOutput,
     separatrices : vtk.vtkAlgorithmOutput,
     segmentation : vtk.vtkAlgorithmOutput,
-    _complex = None
+    _save = None
   ):
-    self._complex = _complex
+    self._save = _save
     self.critical_points = critical_points
     self.separatrices = separatrices
     self.segmentation = segmentation   
@@ -190,7 +190,7 @@ class MorseComplex(MorseSmaleComplex):
       complex.GetOutputPort(0), 
       complex.GetOutputPort(1), 
       complex.GetOutputPort(3), 
-      _complex = complex # Prevent deletion of complex
+      _save = complex # Prevent deletion of complex
     )
   
   def __init__(
@@ -198,7 +198,7 @@ class MorseComplex(MorseSmaleComplex):
     critical_points : vtk.vtkAlgorithmOutput,
     separatrices : vtk.vtkAlgorithmOutput,
     segmentation : vtk.vtkAlgorithmOutput,
-    _complex = None
+    _save = None
   ):
-    super().__init__(critical_points, separatrices, segmentation, _complex = _complex)
+    super().__init__(critical_points, separatrices, segmentation, _save = _save)
     
