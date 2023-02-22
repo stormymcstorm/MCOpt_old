@@ -10,8 +10,8 @@ from .morse_complex import MorseSmaleComplex
 def position_color(graph : MorseGraph) -> np.ndarray:
   return np.array([np.linalg.norm(pos) for n, pos in graph.nodes(data='pos2')])
 
-def highlight_color(graph : MorseGraph, attr) -> np.ndarray:
-  return np.array([int(v) for _, v in graph.nodes(data=attr)])
+def color_by_attr(graph : MorseGraph, attr : str, dtype=int) -> np.ndarray:
+  return np.array([v for _, v in graph.nodes(data=attr)], dtype=dtype)
 
 def component_color(graph : MorseGraph) -> np.ndarray:
   vals = {}
@@ -21,7 +21,6 @@ def component_color(graph : MorseGraph) -> np.ndarray:
       vals[n] = i
   
   return np.array([vals[n] for n in graph.nodes()])
-
 
 def _make_point_map(separatrices_points : pd.DataFrame, critical_points : pd.DataFrame):
   critical_cells = set(critical_points['CellId'])
@@ -81,7 +80,6 @@ def _make_point_map(separatrices_points : pd.DataFrame, critical_points : pd.Dat
     
   return nodes, point_map, critical_nodes
   
-
 class MorseGraph(nx.Graph):
   @staticmethod
   def from_complex(complex: MorseSmaleComplex):

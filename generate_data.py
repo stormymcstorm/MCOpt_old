@@ -22,19 +22,17 @@ from mcopt.morse_complex import (MorseSmaleComplex, MorseComplex)
 
 DATA_DIR = 'data'
 
-def make_dir(new_dir):
-  if not os.path.exists(new_dir):
-    os.makedirs(new_dir)
-
-def gen_terrain(data: np.ndarray, scale_factor=50):
+def gen_complex(data: np.ndarray, scale_factor=50, persistence_threshold=0.1):
   plane = Plane(data)
   tetra = Tetrahedralize(plane.GetOutputPort())
+  
+  warp = Warp(tetra.GetOutputPort(), scale_factor)
 
-  return Warp(tetra.GetOutputPort(), scale_factor)
+  return MorseComplex.create(warp.GetOutputPort(), persistence_threshold=persistence_threshold)
 
 if __name__ == '__main__':
-  make_dir(DATA_DIR)
-
+  out_dir = os.path.join(os.getcwd(), DATA_DIR)
+  
   rng = np.random.default_rng(42)
 
   data1 = Combine([
@@ -44,14 +42,12 @@ if __name__ == '__main__':
   ])
 
   data1 += Smooth(GaussianNoise(rng=rng) * 0.1)
-  terrain1 = gen_terrain(data1)
 
-  complex1 = MorseComplex.create(terrain1.GetOutputPort(), persistence_threshold=0.1)
-  save_complex(complex1, DATA_DIR, '1')
+  complex1 = gen_complex(data1, scale_factor=50, persistence_threshold=0.1)
+  save_complex(complex1, os.path.join(out_dir, 'sinusoidal'))
 
   data2 = data1 + Smooth(GaussianNoise(rng=rng) * 0.2)
-  terrain2 = gen_terrain(data2)
-
-  complex2 = MorseComplex.create(terrain2.GetOutputPort(), persistence_threshold=0.1)
-  save_complex(complex2, DATA_DIR, '2')
+  
+  complex2 = gen_complex(data2, scale_factor=50, persistence_threshold=0.1)
+  save_complex(complex2, os.path.join(out_dir, 'sinusoidal_noisy'))
   
