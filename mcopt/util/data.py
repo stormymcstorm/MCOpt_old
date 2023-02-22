@@ -9,8 +9,14 @@ from skimage import filters
 # TODO: better docs
 
 def Sinusoidal(shape = (100, 100), npeaks=3) -> np.ndarray:
-  """
-  Generates terrain with a sinusoidal pattern
+  """Generates terrain with a sinusodial pattern
+
+  Args:
+    shape (tuple, optional): A 2d array describing width and height of the terrain. Defaults to (100, 100).
+    npeaks (int, optional): The number of peaks. Defaults to 3.
+
+  Returns:
+    np.ndarray: The generated dataset
   """
   assert (len(shape) == 2)
 
