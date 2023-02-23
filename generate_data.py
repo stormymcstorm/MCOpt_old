@@ -10,6 +10,7 @@ from mcopt.util.data import (
   Combine, 
   Distance, 
   GaussianNoise,
+  Gaussian,
   Smooth,
 )
 from mcopt.util.vtk import (
@@ -30,24 +31,32 @@ def gen_complex(data: np.ndarray, scale_factor=50, persistence_threshold=0.1):
 
   return MorseComplex.create(warp.GetOutputPort(), persistence_threshold=persistence_threshold)
 
+def gen_dataset(name, data: np.ndarray, scale_factor=50, persistence_threshold=0):
+  complex = gen_complex(data, scale_factor, persistence_threshold)
+  save_complex(complex, os.path.join(DATA_DIR, name))
+  
+
 if __name__ == '__main__':
   out_dir = os.path.join(os.getcwd(), DATA_DIR)
   
   rng = np.random.default_rng(42)
 
-  data1 = Combine([
+  # Sinusoidal Datasets
+
+  sinusoidal_data = Combine([
     Sinusoidal(npeaks=3),
     # Highest peak in the center
     -Distance(),
   ])
 
-  data1 += Smooth(GaussianNoise(rng=rng) * 0.1)
-
-  complex1 = gen_complex(data1, scale_factor=50, persistence_threshold=0.1)
-  save_complex(complex1, os.path.join(out_dir, 'sinusoidal'))
-
-  data2 = data1 + Smooth(GaussianNoise(rng=rng) * 0.2)
+  sinusoidal_data += Smooth(GaussianNoise(rng=rng) * 0.1)
   
-  complex2 = gen_complex(data2, scale_factor=50, persistence_threshold=0.1)
-  save_complex(complex2, os.path.join(out_dir, 'sinusoidal_noisy'))
+  gen_dataset('sinusoidal', sinusoidal_data, scale_factor=50, persistence_threshold=0.1)
+  
+  sinusoidal_noisy_data1 = sinusoidal_data + Smooth(GaussianNoise(rng=rng) * 0.2)
+  
+  gen_dataset('sinusoidal_noisy', sinusoidal_noisy_data1, scale_factor=50, persistence_threshold=0.1)
+  
+  
+  
   

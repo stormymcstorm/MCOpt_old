@@ -16,7 +16,5 @@ def optimal_transport(X_net : MeasureNetwork, Y_net : MeasureNetwork, dist_type 
     raise ValueError(f'Unknown distance type {dist_type}')
   
   coupling = cg(mu_x, mu_y, 0, 1, dist_func, dist_func.grad)
-  
-  coupling_map = {u_x : {v_y : coupling[i][j] for j, v_y in enumerate(Y)} for i, u_x in enumerate(X)}
-    
-  return coupling, coupling_map
+      
+  return coupling

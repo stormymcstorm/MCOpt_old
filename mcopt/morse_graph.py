@@ -8,19 +8,16 @@ from .morse_complex import MorseSmaleComplex
 from .optimal_transport import MeasureNetwork
 
 
-def color_by_position(graph : MorseGraph) -> np.ndarray:
+def color_by_position(graph : MorseGraph) -> dict:
   """
   Constructs a `node_color` array where the color of a node determined it's position.
   
   Args:
     graph (MorseGraph): The graph to generate a node coloring for.
-    
-  Returns:
-    np.ndarray: An array containing the color assignments for each node.
   """
-  return np.array([np.linalg.norm(pos) for n, pos in graph.nodes(data='pos2')])
+  return {n : np.linalg.norm(pos) for n, pos in graph.nodes(data='pos2')}
 
-def color_by_attr(graph : MorseGraph, attr : str, dtype=int) -> np.ndarray:
+def color_by_attr(graph : MorseGraph, attr : str) -> dict:
   """
   Constructs a `node_color` array where the color of a node is determined by the 
   value of it's `attr` attribute.
@@ -28,15 +25,10 @@ def color_by_attr(graph : MorseGraph, attr : str, dtype=int) -> np.ndarray:
   Args:
     graph (MorseGraph): The graph to generate a node coloring for.
     attr (str): The attribute to base the coloring off of.
-    dtype (optional): The datatype to convert attribute values to. Should be a
-    numeric type (Default=`int`).
-    
-  Returns:
-    np.ndarry: An array containing the color assignments for each node.
   """
-  return np.array([v for _, v in graph.nodes(data=attr)], dtype=dtype)
+  return {n : int(v) for n, v in graph.nodes(data=attr)}
 
-def color_by_component(graph : MorseGraph) -> np.ndarray:
+def color_by_component(graph : MorseGraph) -> dict:
   """
   Constructs a `node_color` array  where the color of a node is determined by
   the connected component it resides in, i.e. all nodes in the same component 
@@ -47,9 +39,6 @@ def color_by_component(graph : MorseGraph) -> np.ndarray:
   
   Args:
     graph (MorseGraph): The graph to generate a node coloring for.
-  
-  Returns:
-    np.ndarry: An array containing the color assignments for each node.
   """
   vals = {}
   
@@ -57,48 +46,34 @@ def color_by_component(graph : MorseGraph) -> np.ndarray:
     for n in comp:
       vals[n] = i
   
-  return np.array([vals[n] for n in graph.nodes()])
+  return vals
 
 def color_from_coupling(
   src_graph : MorseGraph, 
+  X : np.ndarray, 
   dst_graph : MorseGraph, 
+  Y: np.ndarray,
   coupling : np.ndarray,
-) -> Tuple[np.ndarray, np.ndarray]:
-  if src_graph.number_of_nodes() >= dst_graph.number_of_nodes():
-    src_colors = color_by_position(src_graph)    
+  src_color : Optional[dict] = None,
+) -> Tuple[dict, dict]:
+  if src_color is None:
+    src_color = color_by_position(src_graph)
     
-    dst_nodes = list(dst_graph.nodes())
-    dst_nodes.sort()
+  dst_color = {}
+  
+  dst_node_map = {n : i for i, n in enumerate(Y)}
+  
+  src_color_arr = np.array([src_color[n] for n in X])
+  
+  for n in dst_graph.nodes():
+    # Get the distribution for the coupling between n and X[i] for each i
+    couples = coupling[:,dst_node_map[n]]
     
-    dst_node_map = {n:i for i, n in enumerate(dst_nodes)}
+    assert couples.shape[0] == len(src_color_arr)
     
-    dst_colors = np.zeros(dst_graph.number_of_nodes(), dtype=float)
-    
-    for i, n in enumerate(dst_graph.nodes()):
-      couples = coupling[:,dst_node_map[n]]
-      max_couple = np.argmax(couples)
-      
-      dst_colors[i] = src_colors[max_couple]
-      
-    return src_colors, dst_colors
-    
-  else:
-    dst_colors = color_by_position(dst_graph)    
-    
-    src_nodes = list(src_graph.nodes())
-    src_nodes.sort()
-    
-    src_node_map = {n:i for i, n in enumerate(src_nodes)}
-    
-    src_colors = np.zeros(src_graph.number_of_nodes(), dtype=float)
-    
-    for i, n in enumerate(src_graph.nodes()):
-      couples = coupling[src_node_map[n],:]
-      max_couple = np.argmax(couples)
-      
-      src_colors[i] = dst_colors[max_couple]
-      
-  return src_colors, dst_colors
+    dst_color[n] = src_color_arr.dot(couples)
+  
+  return src_color, dst_color
     
 
 # Takes in the raw vtk data and produces a mapping of the points which is easier
@@ -208,6 +183,10 @@ class MorseGraph(nx.Graph):
     
     if 'node_color' not in kwargs:
       kwargs['node_color'] = color_by_position(self)
+      
+    if type(kwargs['node_color']) is dict:
+      node_color = kwargs['node_color']
+      kwargs['node_color'] = np.array([node_color[n] for n in self.nodes()])
     
     nx.draw(
       self, 
@@ -263,11 +242,11 @@ class MorseGraph(nx.Graph):
     
     return graph
   
-  def to_measure_network(self, dist='path_length') -> MeasureNetwork:
+  def to_measure_network(self, weight='path_length') -> MeasureNetwork:
     X = np.array(self.nodes())
     X.sort()
     
-    if dist == 'path_length':
+    if weight == 'path_length':
       lens = dict(nx.all_pairs_shortest_path_length(self))
       
       W = np.zeros((X.shape[0], X.shape[0]), dtype=int)
@@ -275,8 +254,14 @@ class MorseGraph(nx.Graph):
       for u_i, u in enumerate(X):
         for v_i, v in enumerate(X):
            W[u_i,v_i] = lens[u][v]
+    elif weight == 'adj':
+      W = np.zeros((X.shape[0], X.shape[0]), dtype=int)
+      
+      for u_i, u in enumerate(X):
+        for v_i, v in enumerate(X):
+           W[u_i,v_i] = int(v in self.adj[u])
     else:
-      raise ValueError(f'distance mode not supported {dist}')
+      raise ValueError(f'weight mode not supported {weight}')
     
     mu = np.ones(X.shape[0])/len(X)
     
