@@ -47,35 +47,7 @@ def color_by_component(graph : MorseGraph) -> dict:
       vals[n] = i
   
   return vals
-
-def color_from_coupling(
-  src_graph : MorseGraph, 
-  X : np.ndarray, 
-  dst_graph : MorseGraph, 
-  Y: np.ndarray,
-  coupling : np.ndarray,
-  src_color : Optional[dict] = None,
-) -> Tuple[dict, dict]:
-  if src_color is None:
-    src_color = color_by_position(src_graph)
     
-  dst_color = {}
-  
-  dst_node_map = {n : i for i, n in enumerate(Y)}
-  
-  src_color_arr = np.array([src_color[n] for n in X])
-  
-  for n in dst_graph.nodes():
-    # Get the distribution for the coupling between n and X[i] for each i
-    couples = coupling[:,dst_node_map[n]]
-    
-    assert couples.shape[0] == len(src_color_arr)
-    
-    dst_color[n] = src_color_arr.dot(couples)
-  
-  return src_color, dst_color
-    
-
 # Takes in the raw vtk data and produces a mapping of the points which is easier
 # to work with.
 def _make_point_map(separatrices_points : pd.DataFrame, critical_points : pd.DataFrame):
