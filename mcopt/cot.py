@@ -186,16 +186,16 @@ def cot_numpy(X1, X2, w1 = None, w2 = None, v1 = None, v2 = None,
         if C_lin is not None:
             M=M+C_lin           
         if algo == 'emd':
-            Ts = ot.emd(w1, w2, M, numItermax=1e7)
+            Ts = optimal_transport.emd(w1, w2, M, numItermax=1e7)
         elif algo == 'sinkhorn':
-            Ts = ot.sinkhorn(w1, w2, M, reg)
+            Ts = optimal_transport.sinkhorn(w1, w2, M, reg)
 
         M = constC_v - np.dot(hC1_v, Ts).dot(hC2_v.T)
         
         if algo2 == 'emd':
-            Tv = ot.emd(v1, v2, M, numItermax=1e7)
+            Tv = optimal_transport.emd(v1, v2, M, numItermax=1e7)
         elif algo2 == 'sinkhorn':
-            Tv = ot.sinkhorn(v1,v2, M, reg2)
+            Tv = optimal_transport.sinkhorn(v1,v2, M, reg2)
 
         delta = np.linalg.norm(Ts - Tsold) + np.linalg.norm(Tv - Tvold)
         cost = np.sum(M * Tv)

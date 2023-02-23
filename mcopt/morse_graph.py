@@ -1,19 +1,56 @@
 from __future__ import annotations
-from typing import Set,List
+from typing import  Tuple, Dict, Set, Optional
 import networkx as nx
 import numpy as np
 import pandas as pd
 import matplotlib as mpl
 from .morse_complex import MorseSmaleComplex
+from .optimal_transport import MeasureNetwork
 
 
-def position_color(graph : MorseGraph) -> np.ndarray:
+def color_by_position(graph : MorseGraph) -> np.ndarray:
+  """
+  Constructs a `node_color` array where the color of a node determined it's position.
+  
+  Args:
+    graph (MorseGraph): The graph to generate a node coloring for.
+    
+  Returns:
+    np.ndarray: An array containing the color assignments for each node.
+  """
   return np.array([np.linalg.norm(pos) for n, pos in graph.nodes(data='pos2')])
 
 def color_by_attr(graph : MorseGraph, attr : str, dtype=int) -> np.ndarray:
+  """
+  Constructs a `node_color` array where the color of a node is determined by the 
+  value of it's `attr` attribute.
+  
+  Args:
+    graph (MorseGraph): The graph to generate a node coloring for.
+    attr (str): The attribute to base the coloring off of.
+    dtype (optional): The datatype to convert attribute values to. Should be a
+    numeric type (Default=`int`).
+    
+  Returns:
+    np.ndarry: An array containing the color assignments for each node.
+  """
   return np.array([v for _, v in graph.nodes(data=attr)], dtype=dtype)
 
-def component_color(graph : MorseGraph) -> np.ndarray:
+def color_by_component(graph : MorseGraph) -> np.ndarray:
+  """
+  Constructs a `node_color` array  where the color of a node is determined by
+  the connected component it resides in, i.e. all nodes in the same component 
+  will have the same color. Works best when combined with a qualitative color 
+  map [see](https://matplotlib.org/stable/tutorials/colors/colormaps.html).
+  
+  This coloring is particularly useful for debugging.
+  
+  Args:
+    graph (MorseGraph): The graph to generate a node coloring for.
+  
+  Returns:
+    np.ndarry: An array containing the color assignments for each node.
+  """
   vals = {}
   
   for i, comp in enumerate(nx.connected_components(graph)):
@@ -22,6 +59,50 @@ def component_color(graph : MorseGraph) -> np.ndarray:
   
   return np.array([vals[n] for n in graph.nodes()])
 
+def color_from_coupling(
+  src_graph : MorseGraph, 
+  dst_graph : MorseGraph, 
+  coupling : np.ndarray,
+) -> Tuple[np.ndarray, np.ndarray]:
+  if src_graph.number_of_nodes() >= dst_graph.number_of_nodes():
+    src_colors = color_by_position(src_graph)    
+    
+    dst_nodes = list(dst_graph.nodes())
+    dst_nodes.sort()
+    
+    dst_node_map = {n:i for i, n in enumerate(dst_nodes)}
+    
+    dst_colors = np.zeros(dst_graph.number_of_nodes(), dtype=float)
+    
+    for i, n in enumerate(dst_graph.nodes()):
+      couples = coupling[:,dst_node_map[n]]
+      max_couple = np.argmax(couples)
+      
+      dst_colors[i] = src_colors[max_couple]
+      
+    return src_colors, dst_colors
+    
+  else:
+    dst_colors = color_by_position(dst_graph)    
+    
+    src_nodes = list(src_graph.nodes())
+    src_nodes.sort()
+    
+    src_node_map = {n:i for i, n in enumerate(src_nodes)}
+    
+    src_colors = np.zeros(src_graph.number_of_nodes(), dtype=float)
+    
+    for i, n in enumerate(src_graph.nodes()):
+      couples = coupling[src_node_map[n],:]
+      max_couple = np.argmax(couples)
+      
+      src_colors[i] = dst_colors[max_couple]
+      
+  return src_colors, dst_colors
+    
+
+# Takes in the raw vtk data and produces a mapping of the points which is easier
+# to work with.
 def _make_point_map(separatrices_points : pd.DataFrame, critical_points : pd.DataFrame):
   critical_cells = set(critical_points['CellId'])
   
@@ -114,6 +195,8 @@ class MorseGraph(nx.Graph):
     assert nx.is_connected(graph), "MorseGraph should be connected" 
           
     return graph
+  
+  critical_nodes : Set[int]
     
   def __init__(self, critical_nodes):
     super().__init__()
@@ -124,7 +207,7 @@ class MorseGraph(nx.Graph):
     kwargs.setdefault('cmap', 'viridis')
     
     if 'node_color' not in kwargs:
-      kwargs['node_color'] = position_color(self)
+      kwargs['node_color'] = color_by_position(self)
     
     nx.draw(
       self, 
@@ -179,4 +262,23 @@ class MorseGraph(nx.Graph):
     assert all(graph.has_node(n) for n in self.critical_nodes)
     
     return graph
+  
+  def to_measure_network(self, dist='path_length') -> MeasureNetwork:
+    X = np.array(self.nodes())
+    X.sort()
+    
+    if dist == 'path_length':
+      lens = dict(nx.all_pairs_shortest_path_length(self))
+      
+      W = np.zeros((X.shape[0], X.shape[0]), dtype=int)
+      
+      for u_i, u in enumerate(X):
+        for v_i, v in enumerate(X):
+           W[u_i,v_i] = lens[u][v]
+    else:
+      raise ValueError(f'distance mode not supported {dist}')
+    
+    mu = np.ones(X.shape[0])/len(X)
+    
+    return X, W, mu
   
