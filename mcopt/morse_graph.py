@@ -149,7 +149,12 @@ class MorseGraph(nx.Graph):
     super().__init__()
     self.critical_nodes = critical_nodes
           
-  def draw(self, ax = None, **kwargs):        
+  def draw(
+    self, 
+    ax = None, 
+    crit_scale = 3,
+    **kwargs
+  ):        
     kwargs.setdefault('node_size', 10)
     kwargs.setdefault('cmap', 'viridis')
     
@@ -159,15 +164,18 @@ class MorseGraph(nx.Graph):
     if type(kwargs['node_color']) is dict:
       node_color = kwargs['node_color']
       kwargs['node_color'] = np.array([node_color[n] for n in self.nodes()])
+      
+    n_size = kwargs.pop('node_size', 10)
     
     nx.draw(
       self, 
       ax = ax,
       pos = self.nodes(data = 'pos2'),
+      node_size = np.array([n_size * crit_scale if n in self.critical_nodes else n_size for n in self.nodes()]),
       **kwargs,
     )
     
-  def simplify(self, min_length, mode='step') -> MorseGraph:
+  def sample(self, min_length, mode='step') -> MorseGraph:
     graph = MorseGraph(self.critical_nodes)
     
     visited = set()
@@ -238,4 +246,28 @@ class MorseGraph(nx.Graph):
     mu = np.ones(X.shape[0])/len(X)
     
     return X, W, mu
+
+def attribute_cost_mat(
+  X_graph: MorseGraph, 
+  Y_graph : MorseGraph, 
+  attr: str = 'pos2'
+) -> np.ndarray:
+  X = list(X_graph.nodes())
+  X.sort()
   
+  Y = list(Y_graph.nodes())
+  Y.sort()
+  
+  if attr == 'pos2':
+    X_attrs = list(X_graph.nodes(data='pos2')[n] for n in X)
+    Y_attrs = list(Y_graph.nodes(data='pos2')[n] for n in Y)
+  else:
+    raise ValueError(f'attribute mode not supported {attr}')
+  
+  M = np.zeros((len(X), len(Y)), dtype=float)
+  
+  for u_i, u in enumerate(X):
+    for v_i, v in enumerate(Y):
+      M[u_i, v_i] = np.linalg.norm(X_attrs[u_i] - Y_attrs[v_i])
+  
+  return M
