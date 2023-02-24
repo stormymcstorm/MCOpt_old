@@ -21,7 +21,7 @@ from mcopt.util.vtk import (
 from mcopt.util.io import save_complex
 from mcopt.morse_complex import (MorseSmaleComplex, MorseComplex)
 
-DATA_DIR = 'data'
+DATA_DIR = 'gen_data'
 
 def gen_complex(data: np.ndarray, scale_factor=50, persistence_threshold=0.1):
   plane = Plane(data)
