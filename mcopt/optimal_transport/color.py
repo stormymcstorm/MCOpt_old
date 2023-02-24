@@ -1,7 +1,7 @@
 
 from typing import Dict, TypeVar
 import numpy as np
-from .ot import MeasureNetwork
+from .measure_network import MeasureNetwork
 
 N = TypeVar('N')
 
@@ -11,6 +11,18 @@ def color_transfer(
   coupling : np.ndarray, # (# src_nodes, # dst_nodes)
   src_color : Dict[N, float]
 ) -> Dict[N, float]:
+  """TODO
+
+  Args:
+    src_network (MeasureNetwork): The source network.
+    dst_network (MeasureNetwork): The destination network.
+    coupling (np.ndarray): The coupling matrix produced from optimal transport.
+    src_color (Dict[N, float]): A mapping from nodes in `src_network` to their
+    color.
+    
+  Returns:
+    Dict[N, float]: A mapping from nodes in `dst_network` to their color.
+  """
   X, _, _ = src_network
   Y, _, _ = dst_network
   

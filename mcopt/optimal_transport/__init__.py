@@ -1,2 +1,3 @@
-from .ot import MeasureNetwork, optimal_transport
+from .measure_network import MeasureNetwork
 from .color import *
+from .gw import *

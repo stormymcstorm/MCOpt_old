@@ -221,13 +221,13 @@ class MorseGraph(nx.Graph):
     if weight == 'path_length':
       lens = dict(nx.all_pairs_shortest_path_length(self))
       
-      W = np.zeros((X.shape[0], X.shape[0]), dtype=int)
+      W = np.zeros((X.shape[0], X.shape[0]), dtype=float)
       
       for u_i, u in enumerate(X):
         for v_i, v in enumerate(X):
            W[u_i,v_i] = lens[u][v]
     elif weight == 'adj':
-      W = np.zeros((X.shape[0], X.shape[0]), dtype=int)
+      W = np.zeros((X.shape[0], X.shape[0]), dtype=float)
       
       for u_i, u in enumerate(X):
         for v_i, v in enumerate(X):
