@@ -34,6 +34,7 @@ def Distance(shape = (100, 100)) -> np.ndarray:
 
   return np.fromfunction(height, shape=shape, dtype=float)
 
+
 def Gaussian(center, shape = (100, 100), sigma=1) -> np.ndarray:
   assert (len(center) == 2)
   assert (len(shape) == 2)
@@ -41,9 +42,11 @@ def Gaussian(center, shape = (100, 100), sigma=1) -> np.ndarray:
   arr = np.zeros(shape=shape, dtype=float)
 
   arr[center] = 1
-
-  return filters.gaussian(arr, sigma=sigma)
   
+  arr = filters.gaussian(arr, sigma=sigma)
+
+  return arr * 1/arr.max()
+
 def GaussianNoise(shape = (100, 100), rng = None) -> np.ndarray:
   assert (len(shape) == 2)
 
