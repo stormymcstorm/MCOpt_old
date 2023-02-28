@@ -222,12 +222,23 @@ class MorseGraph(nx.Graph):
     
     return graph
   
-  def to_measure_network(self, weight='path_length') -> MeasureNetwork:
+  def to_measure_network(self, weight='path_length', hist='unif') -> MeasureNetwork:
     X = np.array(self.nodes())
     X.sort()
     
     if weight == 'path_length':
       lens = dict(nx.all_pairs_shortest_path_length(self))
+      
+      W = np.zeros((X.shape[0], X.shape[0]), dtype=float)
+      
+      for u_i, u in enumerate(X):
+        for v_i, v in enumerate(X):
+           W[u_i,v_i] = lens[u][v]
+    elif weight == 'geo_dist':
+      lens = dict(nx.all_pairs_dijkstra_path_length(
+        self, 
+        weight=lambda u, v, _: np.linalg.norm(self.nodes(data='pos2')[u] - self.nodes(data='pos2')[v])
+      ))
       
       W = np.zeros((X.shape[0], X.shape[0]), dtype=float)
       
@@ -243,7 +254,12 @@ class MorseGraph(nx.Graph):
     else:
       raise ValueError(f'weight mode not supported {weight}')
     
-    mu = np.ones(X.shape[0])/len(X)
+    if hist == 'unif':
+      mu = np.ones(X.shape[0])/len(X)
+    elif hist == 'deg':
+      mu = np.array([self.degree(n) for n in X]) / sum([self.degree(n) for n in X])
+    else:
+      raise ValueError(f'hist mode not supported {hist}')
     
     return X, W, mu
 
