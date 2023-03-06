@@ -1,5 +1,7 @@
 {
   "cSpell.words": [
     "separatrices"
-  ]
+  ],
+  "editor.formatOnSave": false,
+  "editor.defaultFormatter": "ms-python.python"
 }

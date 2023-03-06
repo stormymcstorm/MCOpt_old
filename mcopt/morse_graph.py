@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import matplotlib as mpl
 from .morse_complex import MorseSmaleComplex
-from .optimal_transport import MeasureNetwork
+from .opt import MeasureNetwork
 
 
 def color_by_position(graph : MorseGraph) -> dict:

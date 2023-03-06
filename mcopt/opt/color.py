@@ -32,6 +32,11 @@ def color_transfer(
   
   for i, n in enumerate(Y):
     src_i = coupling[:,i].argmax()
+    
+    if (coupling[src_i, i] == 0.0):
+      dst_color[n] = np.nan
+      continue
+    
     src = src_node_rev_map[src_i]
     
     dst_color[n] = src_color[src]
