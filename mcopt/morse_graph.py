@@ -151,27 +151,39 @@ class MorseGraph(nx.Graph):
           
   def draw(
     self, 
-    ax = None, 
+    ax,
     crit_scale = 3,
+    node_color = None,
+    node_size = 10,
     **kwargs
   ):        
-    kwargs.setdefault('node_size', 10)
     kwargs.setdefault('cmap', 'viridis')
     
-    if 'node_color' not in kwargs:
-      kwargs['node_color'] = color_by_position(self)
+    if not node_color:
+      node_color = color_by_position(self)
       
-    if type(kwargs['node_color']) is dict:
-      node_color = kwargs['node_color']
-      kwargs['node_color'] = np.array([node_color[n] for n in self.nodes()])
-      
-    n_size = kwargs.pop('node_size', 10)
+    if type(node_color) is dict:
+      node_color = np.array([node_color[n] for n in self.nodes()])
+    
+    # Makes critical points larger
+    node_size = np.array([
+      node_size * crit_scale if n in self.critical_nodes else node_size for n in self.nodes()
+    ])
+    
+    # Allows for nodes that should be given a "bad color" to have a `nan` value.
+    vmin = np.nanmin(node_color)
+    vmax = np.nanmax(node_color)
     
     nx.draw(
       self, 
       ax = ax,
       pos = self.nodes(data = 'pos2'),
-      node_size = np.array([n_size * crit_scale if n in self.critical_nodes else n_size for n in self.nodes()]),
+      node_size = node_size,
+      node_color = node_color,
+      # These fields cause networkx_draw_nodes to plot as if `plotnonfinite=True`
+      vmin=vmin,
+      vmax=vmax,
+      alpha=[1],
       **kwargs,
     )
     
