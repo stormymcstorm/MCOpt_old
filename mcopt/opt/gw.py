@@ -1,7 +1,12 @@
 from .measure_network import MeasureNetwork
 import ot 
 import numpy as np
+from scipy import stats
+from scipy.sparse import random
 from .optim import cg, pcg, NonConvergenceError
+from .bregman import sinkhorn_scaling
+
+__all__ = ['GW', 'fGW', 'pGW', 'pGW_old', 'fpGW', 'random_gamma_init']
 
 def init_matrix(C1, C2, p, q, loss_fun='square_loss'):
   
@@ -47,7 +52,6 @@ def gwloss(constC, hC1, hC2, T):
 def gwgrad(constC, hC1, hC2, T):
   return 2*tensor_product(constC, hC1, hC2, T)
   
-  
 # CHECKME: does this assume square loss
 def gwgrad_partial(C1, C2, T):
   cC1 = np.dot(C1 ** 2 / 2, np.dot(T, np.ones(C2.shape[0]).reshape(-1, 1)))
@@ -61,11 +65,18 @@ def gwloss_partial(C1, C2, T):
   g = gwgrad_partial(C1, C2, T) * 0.5
   return np.sum(g * T)
 
+
+def random_gamma_init(p, q, random_state, **kwargs):
+  rvs = stats.beta(1e-1,1e-1).rvs
+  S = random(len(p), len(q), density=1, data_rvs=rvs, random_state=random_state)
+  return sinkhorn_scaling(p,q,S.A, **kwargs)
+
 def GW(
   X_net : MeasureNetwork, 
   Y_net : MeasureNetwork, 
   M : np.ndarray = 0,
   alpha : float = 1,
+  G0 = None,
   armijo=True,
   log = False,
   verbose=False,
@@ -77,7 +88,8 @@ def GW(
   
   constC, hC1, hC2 = init_matrix(C1, C2, p, q)
   
-  G0 = p[:,None] * q[None,:]
+  if G0 is None:
+    G0 = p[:,None] * q[None,:]
   
   def f(G):
     return gwloss(constC, hC1, hC2, G)
@@ -123,15 +135,14 @@ def fGW(
   Y_net : MeasureNetwork,
   M : np.ndarray,
   alpha : float = 0.5,
-  log = False,
   **kwargs
 ):
-  return GW(X_net, Y_net, M=M, alpha=alpha, log=log)
+  return GW(X_net, Y_net, M=M, alpha=alpha)
 
 def pGW(
   X_net : MeasureNetwork, 
   Y_net : MeasureNetwork, 
-  m,
+  m : float,
   M : np.ndarray = 0,
   alpha : float = 1,
   armijo=True,
@@ -159,7 +170,7 @@ def pGW(
   
   try:
     out = pcg(
-      p, q, M, alpha, m, f, df, 
+      p, q, M, alpha, m, f, df, G0 = G0,
       log=log, verbose=verbose, armijo=armijo, C1=C1, C2=C2, constC=constC, 
       **kwargs
     )
@@ -169,7 +180,7 @@ def pGW(
         print('Fail to converge. Turning off armijo research. Using closed form.')
         
       out = pcg(
-        p, q, M, alpha, m, f, df, 
+        p, q, M, alpha, m, f, df, G0 = G0,
         log=log, verbose=verbose, armijo=False, C1=C1, C2=C2, constC=constC, 
         **kwargs
       )
@@ -190,26 +201,15 @@ def pGW(
     
     return res, dist
 
-# def GW(
-#   X_net : MeasureNetwork, 
-#   Y_net : MeasureNetwork, 
-#   **kwargs
-# ):
-#   X, W_x, mu_x = X_net
-#   Y, W_y, mu_y = Y_net
-  
-#   return ot.gromov.gromov_wasserstein(W_x, W_y, mu_x, mu_y, **kwargs)
-
-# def fGW(
-#   X_net : MeasureNetwork, 
-#   Y_net : MeasureNetwork, 
-#   M,
-#   **kwargs
-# ):
-#   X, W_x, mu_x = X_net
-#   Y, W_y, mu_y = Y_net
-  
-#   return ot.gromov.fused_gromov_wasserstein(M, W_x, W_y, mu_x, mu_y, **kwargs)
+def fpGW(
+  X_net : MeasureNetwork,
+  Y_net : MeasureNetwork,
+  m : float,
+  M : np.ndarray,
+  alpha : float = 0.5,
+  **kwargs
+):
+  return pGW(X_net, Y_net, m, M=M, alpha=alpha)
 
 def pGW_old(
   X_net : MeasureNetwork, 
