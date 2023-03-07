@@ -34,7 +34,7 @@ def color_transfer(
     src_i = coupling[:,i].argmax()
     
     # CHECKME: what is the correct round off?
-    if (coupling[src_i, i] < 1e-20):
+    if (coupling[src_i, i] < 1e-10):
       dst_color[n] = np.nan
       continue
     
