@@ -33,7 +33,8 @@ def color_transfer(
   for i, n in enumerate(Y):
     src_i = coupling[:,i].argmax()
     
-    if (coupling[src_i, i] == 0.0):
+    # CHECKME: what is the correct round off?
+    if (coupling[src_i, i] < 1e-20):
       dst_color[n] = np.nan
       continue
     

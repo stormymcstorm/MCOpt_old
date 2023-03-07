@@ -1,7 +1,7 @@
 from .measure_network import MeasureNetwork
 import ot 
 import numpy as np
-from .optim import cg, NonConvergenceError
+from .optim import cg, pcg, NonConvergenceError
 
 def init_matrix(C1, C2, p, q, loss_fun='square_loss'):
   
@@ -47,6 +47,19 @@ def gwloss(constC, hC1, hC2, T):
 def gwgrad(constC, hC1, hC2, T):
   return 2*tensor_product(constC, hC1, hC2, T)
   
+  
+# CHECKME: does this assume square loss
+def gwgrad_partial(C1, C2, T):
+  cC1 = np.dot(C1 ** 2 / 2, np.dot(T, np.ones(C2.shape[0]).reshape(-1, 1)))
+  cC2 = np.dot(np.dot(np.ones(C1.shape[0]).reshape(1, -1), T), C2 ** 2 / 2)
+  constC = cC1 + cC2
+  A = -np.dot(C1, T).dot(C2.T)
+  tens = constC + A
+  return tens * 2
+
+def gwloss_partial(C1, C2, T):
+  g = gwgrad_partial(C1, C2, T) * 0.5
+  return np.sum(g * T)
 
 def GW(
   X_net : MeasureNetwork, 
@@ -59,12 +72,12 @@ def GW(
   **kwargs
 ):
   
-  X, W_x, mu_x = X_net
-  Y, W_y, mu_y = Y_net
+  X, C1, p = X_net
+  Y, C2, q = Y_net
   
-  constC, hC1, hC2 = init_matrix(W_x, W_y, mu_x, mu_y)
+  constC, hC1, hC2 = init_matrix(C1, C2, p, q)
   
-  G0 = mu_x[:,None] * mu_y[None,:]
+  G0 = p[:,None] * q[None,:]
   
   def f(G):
     return gwloss(constC, hC1, hC2, G)
@@ -74,8 +87,8 @@ def GW(
   
   try:
     out = cg(
-      mu_x, mu_y, M, alpha, f, df, G0, 
-      log=log, verbose=verbose, armijo=armijo, C1=W_x, C2=W_y, constC=constC, 
+      p, q, M, alpha, f, df, G0, 
+      log=log, verbose=verbose, armijo=armijo, C1=C1, C2=C2, constC=constC, 
       **kwargs
     )
   except (NonConvergenceError):
@@ -84,8 +97,8 @@ def GW(
         print('Fail to converge. Turning off armijo research. Using closed form.')
         
       out = cg(
-        mu_x, mu_y, M, alpha, f, df, G0, 
-        log=log, verbose=verbose, armijo=armijo, C1=W_x, C2=W_y, constC=constC, 
+        p, q, M, alpha, f, df, G0, 
+        log=log, verbose=verbose, armijo=False, C1=C1, C2=C2, constC=constC, 
         **kwargs
       )
     else:
@@ -115,6 +128,68 @@ def fGW(
 ):
   return GW(X_net, Y_net, M=M, alpha=alpha, log=log)
 
+def pGW(
+  X_net : MeasureNetwork, 
+  Y_net : MeasureNetwork, 
+  m,
+  M : np.ndarray = 0,
+  alpha : float = 1,
+  armijo=True,
+  log = False,
+  verbose=False,
+  **kwargs
+):
+  X, C1, p = X_net
+  Y, C2, q = Y_net
+  
+  G0 = np.outer(p, q)
+  
+  if np.sum(G0) > m:
+    G0 *= (m / np.sum(G0))
+  
+  cC1 = np.dot(C1 ** 2 / 2, np.dot(G0, np.ones(C2.shape[0]).reshape(-1, 1)))
+  cC2 = np.dot(np.dot(np.ones(C1.shape[0]).reshape(1, -1), G0), C2 ** 2 / 2)
+  constC = cC1 + cC2
+  
+  def f(G):
+    return gwloss_partial(C1, C2, G)
+  
+  def df(G):
+    return gwgrad_partial(C1, C2, G)
+  
+  try:
+    out = pcg(
+      p, q, M, alpha, m, f, df, 
+      log=log, verbose=verbose, armijo=armijo, C1=C1, C2=C2, constC=constC, 
+      **kwargs
+    )
+  except (NonConvergenceError):
+    if armijo:
+      if verbose:
+        print('Fail to converge. Turning off armijo research. Using closed form.')
+        
+      out = pcg(
+        p, q, M, alpha, m, f, df, 
+        log=log, verbose=verbose, armijo=False, C1=C1, C2=C2, constC=constC, 
+        **kwargs
+      )
+    else:
+      raise
+    
+  if log:
+    res, log = out
+    
+    dist = gwloss_partial(C1, C2, res)
+    log['gw_dist'] = dist
+    
+    return res, dist, log
+  else:
+    res = out
+  
+    dist = gwloss_partial(C1, C2, res)
+    
+    return res, dist
+
 # def GW(
 #   X_net : MeasureNetwork, 
 #   Y_net : MeasureNetwork, 
@@ -136,7 +211,7 @@ def fGW(
   
 #   return ot.gromov.fused_gromov_wasserstein(M, W_x, W_y, mu_x, mu_y, **kwargs)
 
-def pGW(
+def pGW_old(
   X_net : MeasureNetwork, 
   Y_net : MeasureNetwork, 
   m,
