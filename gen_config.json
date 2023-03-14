@@ -1,0 +1,426 @@
+{
+  "datasets": {
+    "sinusoidal": {
+      "type": "gen",
+      "shape": [100, 100],
+      "layers": [
+        {
+          "layer": "sinusoidal", 
+          "weight": 0.5, 
+          "args": {"npeaks": 3}
+        },
+        {
+          "layer": "distance",
+          "weight": -0.5
+        },
+        {
+          "layer": "noise",
+          "args": {"random_state": 42, "scale": 0.1}
+        }
+      ],
+      "scale_factor": 50,
+      "persistence_threshold": 0.1
+    },
+    "sinusoidal_noisy": {
+      "type": "gen",
+      "shape": [100, 100],
+      "layers": [
+        {
+          "layer": "sinusoidal", 
+          "weight": 0.5, 
+          "args": {"npeaks": 3}
+        },
+        {
+          "layer": "distance",
+          "weight": -0.5
+        },
+        {
+          "layer": "noise",
+          "args": {"random_state": 42, "scale": 0.25}
+        }
+      ],
+      "scale_factor": 50,
+      "persistence_threshold": 0.1
+    },
+    "complex": {
+      "type": "gen",
+      "shape": [102, 102],
+      "layers": [
+        {
+          "layer": "gaussian",
+          "weight": 0.5,
+          "args": {
+            "center": [17,17],
+            "sigma": 9
+          }
+        },
+        {
+          "layer": "gaussian",
+          "weight": 1,
+          "args": {
+            "center": [17,51],
+            "sigma": 9
+          }
+        },
+        {
+          "layer": "gaussian",
+          "weight": 1,
+          "args": {
+            "center": [17,85],
+            "sigma": 15
+          }
+        },
+        {
+          "layer": "gaussian",
+          "weight": 1,
+          "args": {
+            "center": [51,17],
+            "sigma": 9
+          }
+        },
+        {
+          "layer": "gaussian",
+          "weight": -0.75,
+          "args": {
+            "center": [51,51],
+            "sigma": 12
+          }
+        },
+        {
+          "layer": "gaussian",
+          "weight": 1,
+          "args": {
+            "center": [51,85],
+            "sigma": 6
+          }
+        },
+        {
+          "layer": "gaussian",
+          "weight": 0.75,
+          "args": {
+            "center": [85,17],
+            "sigma": 9
+          }
+        },
+        {
+          "layer": "gaussian",
+          "weight": 0.5,
+          "args": {
+            "center": [85,51],
+            "sigma": 3
+          }
+        },
+        {
+          "layer": "gaussian",
+          "weight": -0.5,
+          "args": {
+            "center": [85,85],
+            "sigma": 15
+          }
+        },
+        {
+          "layer": "gaussian",
+          "weight": 0.4,
+          "args": {
+            "center": [93,59],
+            "sigma": 3
+          }
+        },
+        {
+          "layer": "gaussian",
+          "weight": 0.6,
+          "args": {
+            "center": [93,43],
+            "sigma": 3
+          }
+        },
+        {
+          "layer": "noise",
+          "args": {"random_state": 42, "scale": 0.1}
+        }
+      ],
+      "scale_factor": 50,
+      "persistence_threshold": 0.2
+    },
+    "complex_noisy": {
+      "type": "gen",
+      "shape": [102, 102],
+      "layers": [
+        {
+          "layer": "gaussian",
+          "weight": 0.5,
+          "args": {
+            "center": [17,17],
+            "sigma": 9
+          }
+        },
+        {
+          "layer": "gaussian",
+          "weight": 1,
+          "args": {
+            "center": [17,51],
+            "sigma": 9
+          }
+        },
+        {
+          "layer": "gaussian",
+          "weight": 1,
+          "args": {
+            "center": [17,85],
+            "sigma": 15
+          }
+        },
+        {
+          "layer": "gaussian",
+          "weight": 1,
+          "args": {
+            "center": [51,17],
+            "sigma": 9
+          }
+        },
+        {
+          "layer": "gaussian",
+          "weight": -0.75,
+          "args": {
+            "center": [51,51],
+            "sigma": 12
+          }
+        },
+        {
+          "layer": "gaussian",
+          "weight": 1,
+          "args": {
+            "center": [51,85],
+            "sigma": 6
+          }
+        },
+        {
+          "layer": "gaussian",
+          "weight": 0.75,
+          "args": {
+            "center": [85,17],
+            "sigma": 9
+          }
+        },
+        {
+          "layer": "gaussian",
+          "weight": 0.5,
+          "args": {
+            "center": [85,51],
+            "sigma": 3
+          }
+        },
+        {
+          "layer": "gaussian",
+          "weight": -0.5,
+          "args": {
+            "center": [85,85],
+            "sigma": 15
+          }
+        },
+        {
+          "layer": "gaussian",
+          "weight": 0.4,
+          "args": {
+            "center": [93,59],
+            "sigma": 3
+          }
+        },
+        {
+          "layer": "gaussian",
+          "weight": 0.6,
+          "args": {
+            "center": [93,43],
+            "sigma": 3
+          }
+        },
+        {
+          "layer": "noise",
+          "args": {"random_state": 42, "scale": 0.25}
+        }
+      ],
+      "scale_factor": 50,
+      "persistence_threshold": 0.2
+    },
+    "wind1": {
+      "type": "load",
+      "path": "data/wind/wind1.vti",
+      "scale_factor": 1,
+      "persistence_threshold": 2.5
+    },
+    "wind2": {
+      "type": "load",
+      "path": "data/wind/wind2.vti",
+      "scale_factor": 1,
+      "persistence_threshold": 2.5
+    },
+    "wind4": {
+      "type": "load",
+      "path": "data/wind/wind4.vti",
+      "scale_factor": 1,
+      "persistence_threshold": 2.5
+    },
+    "wind5": {
+      "type": "load",
+      "path": "data/wind/wind5.vti",
+      "scale_factor": 1,
+      "persistence_threshold": 2.5
+    },
+    "wind6": {
+      "type": "load",
+      "path": "data/wind/wind6.vti",
+      "scale_factor": 1,
+      "persistence_threshold": 2.5
+    },
+    "wind7": {
+      "type": "load",
+      "path": "data/wind/wind7.vti",
+      "scale_factor": 1,
+      "persistence_threshold": 2.5
+    },
+    "wind9": {
+      "type": "load",
+      "path": "data/wind/wind9.vti",
+      "scale_factor": 1,
+      "persistence_threshold": 2.5
+    },
+    "wind10": {
+      "type": "load",
+      "path": "data/wind/wind10.vti",
+      "scale_factor": 1,
+      "persistence_threshold": 2.5
+    },
+    "wind11": {
+      "type": "load",
+      "path": "data/wind/wind11.vti",
+      "scale_factor": 1,
+      "persistence_threshold": 2.5
+    },
+    "wind12": {
+      "type": "load",
+      "path": "data/wind/wind12.vti",
+      "scale_factor": 1,
+      "persistence_threshold": 2.5
+    },
+    "wind13": {
+      "type": "load",
+      "path": "data/wind/wind13.vti",
+      "scale_factor": 1,
+      "persistence_threshold": 2.5
+    },
+    "wind14": {
+      "type": "load",
+      "path": "data/wind/wind14.vti",
+      "scale_factor": 1,
+      "persistence_threshold": 2.5
+    },
+    "wind15": {
+      "type": "load",
+      "path": "data/wind/wind15.vti",
+      "scale_factor": 1,
+      "persistence_threshold": 2.5
+    },
+    "red_sea1": {
+      "type": "load",
+      "path": "data/redSea/redSeaVelocity1.vti",
+      "scale_factor": 25,
+      "persistence_threshold": 0.01
+    },
+    "red_sea2": {
+      "type": "load",
+      "path": "data/redSea/redSeaVelocity2.vti",
+      "scale_factor": 25,
+      "persistence_threshold": 0.01
+    },
+    "red_sea3": {
+      "type": "load",
+      "path": "data/redSea/redSeaVelocity3.vti",
+      "scale_factor": 25,
+      "persistence_threshold": 0.01
+    },
+    "red_sea4": {
+      "type": "load",
+      "path": "data/redSea/redSeaVelocity4.vti",
+      "scale_factor": 25,
+      "persistence_threshold": 0.01
+    },
+    "red_sea5": {
+      "type": "load",
+      "path": "data/redSea/redSeaVelocity5.vti",
+      "scale_factor": 25,
+      "persistence_threshold": 0.01
+    },
+    "red_sea6": {
+      "type": "load",
+      "path": "data/redSea/redSeaVelocity6.vti",
+      "scale_factor": 25,
+      "persistence_threshold": 0.01
+    },
+    "red_sea7": {
+      "type": "load",
+      "path": "data/redSea/redSeaVelocity7.vti",
+      "scale_factor": 25,
+      "persistence_threshold": 0.01
+    },
+    "red_sea8": {
+      "type": "load",
+      "path": "data/redSea/redSeaVelocity8.vti",
+      "scale_factor": 25,
+      "persistence_threshold": 0.01
+    },
+    "red_sea9": {
+      "type": "load",
+      "path": "data/redSea/redSeaVelocity9.vti",
+      "scale_factor": 25,
+      "persistence_threshold": 0.01
+    },
+    "red_sea10": {
+      "type": "load",
+      "path": "data/redSea/redSeaVelocity99.vti",
+      "scale_factor": 25,
+      "persistence_threshold": 0.01
+    },
+    "naiver_stokes1": {
+      "type": "load",
+      "path": "data/Naiver-Stokes/speed1.vti",
+      "scale_factor": 10,
+      "persistence_threshold": 0.1
+    },
+    "naiver_stokes2": {
+      "type": "load",
+      "path": "data/Naiver-Stokes/speed2.vti",
+      "scale_factor": 10,
+      "persistence_threshold": 0.1
+    },
+    "naiver_stokes3": {
+      "type": "load",
+      "path": "data/Naiver-Stokes/speed3.vti",
+      "scale_factor": 10,
+      "persistence_threshold": 0.1
+    },
+    "naiver_stokes4": {
+      "type": "load",
+      "path": "data/Naiver-Stokes/speed4.vti",
+      "scale_factor": 10,
+      "persistence_threshold": 0.1
+    },
+    "naiver_stokes5": {
+      "type": "load",
+      "path": "data/Naiver-Stokes/speed5.vti",
+      "scale_factor": 10,
+      "persistence_threshold": 0.1
+    },
+    "naiver_stokes6": {
+      "type": "load",
+      "path": "data/Naiver-Stokes/speed6.vti",
+      "scale_factor": 10,
+      "persistence_threshold": 0.1
+    },
+    "naiver_stokes7": {
+      "type": "load",
+      "path": "data/Naiver-Stokes/speed7.vti",
+      "scale_factor": 10,
+      "persistence_threshold": 0.1
+    }
+  }
+}

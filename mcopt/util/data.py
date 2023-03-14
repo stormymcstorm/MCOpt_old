@@ -41,7 +41,7 @@ def Gaussian(center, shape = (100, 100), sigma=1) -> np.ndarray:
 
   arr = np.zeros(shape=shape, dtype=float)
 
-  arr[center] = 1
+  arr[(center[0], center[1])] = 1
   
   arr = filters.gaussian(arr, sigma=sigma)
 
