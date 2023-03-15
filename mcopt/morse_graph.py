@@ -127,7 +127,11 @@ class MorseGraph(nx.Graph):
     )
   
   @staticmethod
-  def from_csvs(separatrices_cells : pd.DataFrame, separatrices_points : pd.DataFrame, critical_points : pd.DataFrame):
+  def from_csvs(
+    separatrices_cells : pd.DataFrame, 
+    separatrices_points : pd.DataFrame, 
+    critical_points : pd.DataFrame
+  ):
     nodes, point_map, critical_nodes = _make_point_map(separatrices_points, critical_points)
     
     graph = MorseGraph(critical_nodes)
@@ -180,6 +184,7 @@ class MorseGraph(nx.Graph):
       pos = self.nodes(data = 'pos2'),
       node_size = node_size,
       node_color = node_color,
+      
       # These fields cause networkx_draw_nodes to plot as if `plotnonfinite=True`
       vmin=vmin,
       vmax=vmax,
@@ -187,7 +192,7 @@ class MorseGraph(nx.Graph):
       **kwargs,
     )
     
-  def sample(self, min_length, mode='step') -> MorseGraph:
+  def sample(self, rate, mode='step') -> MorseGraph:
     graph = MorseGraph(self.critical_nodes)
     
     visited = set()
@@ -214,7 +219,7 @@ class MorseGraph(nx.Graph):
         if mode == 'geo_dist':
           new_length = length + np.linalg.norm(self.nodes(data=True)[n]['pos2'] - self.nodes(data=True)[node]['pos2'])
         
-        if new_length > min_length:
+        if new_length > rate:
           graph.add_node(n, **self.nodes(data=True)[n])
           
           assert graph.has_node(start)

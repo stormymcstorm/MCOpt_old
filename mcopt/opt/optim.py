@@ -17,6 +17,11 @@ def cg(
   a, b, M, reg, f, df, G0=None, numItermax=200, numItermaxEmd=100000,
   stopThr=1e-9, stopThr2=1e-9, verbose=False, log=False, **kwargs
 ):
+  """Adapted from https://pythonot.github.io/gen_modules/ot.optim.html#ot.optim.cg
+
+  Raises:
+    NonConvergenceError: Raise if optimization does not converge
+  """
   if log:
     log = {'loss': [],'delta_fval': []}
     

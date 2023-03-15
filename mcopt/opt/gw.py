@@ -6,10 +6,9 @@ from scipy.sparse import random
 from .optim import cg, pcg, NonConvergenceError
 from .bregman import sinkhorn_scaling
 
-__all__ = ['GW', 'fGW', 'pGW', 'pGW_old', 'fpGW', 'random_gamma_init']
+__all__ = ['GW', 'fGW', 'pGW', 'fpGW', 'random_gamma_init']
 
 def init_matrix(C1, C2, p, q, loss_fun='square_loss'):
-  
   if loss_fun == 'square_loss':
     def f1(a):
       return a**2
@@ -210,14 +209,3 @@ def fpGW(
   **kwargs
 ):
   return pGW(X_net, Y_net, m, M=M, alpha=alpha)
-
-def pGW_old(
-  X_net : MeasureNetwork, 
-  Y_net : MeasureNetwork, 
-  m,
-  **kwargs
-):
-  X, W_x, mu_x = X_net
-  Y, W_y, mu_y = Y_net
-  
-  return ot.partial.partial_gromov_wasserstein(W_x, W_y, mu_x, mu_y, m, **kwargs)
