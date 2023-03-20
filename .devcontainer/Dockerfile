@@ -26,4 +26,4 @@ RUN groupadd --gid ${USER_GID} ${USERNAME} \
   && chmod 0440 /etc/sudoers.d/${USERNAME}
 
 RUN python3 -m venv /home/${USERNAME}/.venv --system-site-packages \
-  && echo "source ~/.venv/bin/activate" >> /home/${USERNAME}/.bashrc
+  && echo "source $HOME/.venv/bin/activate" >> /home/${USERNAME}/.bashrc
