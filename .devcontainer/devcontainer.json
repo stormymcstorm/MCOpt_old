@@ -4,5 +4,15 @@
     "dockerfile": "Dockerfile"
   },
   "remoteUser": "vscode",
-  "postStartCommand": "pip install -e ."
+  "postStartCommand": "pip install -e .",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/home/vscode/.venv/bin/python"
+      }
+    }
+  }
 }

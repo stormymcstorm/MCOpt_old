@@ -1,3 +1,46 @@
 {
-  "datasets": {}
+  "complexes": {
+    "sinusoidal": {
+      "type": "gen",
+      "persistence_threshold": 0.1,
+      "shape": [100, 100],
+      "layers": [
+        {
+          "layer": "sinusoidal",
+          "weight": 0.5,
+          "args": {"npeaks": 3}
+        },
+        {
+          "layer": "distance",
+          "weight": -0.5
+        },
+        {
+          "layer": "noise",
+          "args": {"random_state": 42, "scale": 0.1}
+        }
+      ],
+      "warp": 50
+    },
+    "sinusoidal_noisy": {
+      "type": "gen",
+      "persistence_threshold": 0.1,
+      "shape": [100, 100],
+      "layers": [
+        {
+          "layer": "sinusoidal",
+          "weight": 0.5,
+          "args": {"npeaks": 3}
+        },
+        {
+          "layer": "distance",
+          "weight": -0.5
+        },
+        {
+          "layer": "noise",
+          "args": {"random_state": 42, "scale": 0.35}
+        }
+      ],
+      "warp": 50
+    }
+  }
 }
