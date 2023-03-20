@@ -42,6 +42,7 @@ def ReadVTP(
 ) -> vtk.vtkAlgorithm:
   reader = vtk.vtkXMLPolyDataReader()
   reader.SetFileName(file_name)
+  reader.Update()
   
   return reader
 
@@ -50,6 +51,7 @@ def ReadVTU(
 ) -> vtk.vtkAlgorithm:
   reader = vtk.vtkXMLUnstructuredGridReader()
   reader.SetFileName(file_name)
+  reader.Update()
   
   return reader
 
@@ -58,6 +60,7 @@ def ReadVTI(
 ) -> vtk.vtkAlgorithm:
   reader = vtk.vtkXMLImageDataReader()
   reader.SetFileName(file_name)
+  reader.Update()
   
   return reader
 

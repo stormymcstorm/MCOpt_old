@@ -58,6 +58,20 @@ def generate_complexes(complex_config):
         source = warp.GetOutputPort()
       else:
         source = plane.GetOutputPort()
+    elif ty == 'load':
+      path = conf['path']
+      abs_path = os.path.join(ROOT, path)
+      
+      res = path.rsplit(os.path.extsep, maxsplit=1)
+      if (len(res) < 2):
+        raise ValueError(f'path requires file extension: {path}')
+      
+      ext = res[1]
+      if ext == 'vti':
+        image_data = vtk_util.ReadVTI(abs_path)
+        source = image_data.GetOutputPort()
+      else:
+        raise ValueError(f'Unrecognized file type {ext}')
     else:
       raise ValueError(f'Unrecognized complex type {ty}')
     

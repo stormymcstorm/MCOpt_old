@@ -41,6 +41,166 @@
         }
       ],
       "warp": 50
+    },
+    "wind1": {
+      "type": "load",
+      "persistence_threshold": 2.5,
+      "path": "datasets/wind/wind1.vti"
+    },
+    "wind2": {
+      "type": "load",
+      "persistence_threshold": 2.5,
+      "path": "datasets/wind/wind2.vti"
+    },
+    "wind3": {
+      "type": "load",
+      "persistence_threshold": 2.5,
+      "path": "datasets/wind/wind3.vti"
+    },
+    "wind4": {
+      "type": "load",
+      "persistence_threshold": 2.5,
+      "path": "datasets/wind/wind4.vti"
+    },
+    "wind5": {
+      "type": "load",
+      "persistence_threshold": 2.5,
+      "path": "datasets/wind/wind5.vti"
+    },
+    "wind6": {
+      "type": "load",
+      "persistence_threshold": 2.5,
+      "path": "datasets/wind/wind6.vti"
+    },
+    "wind7": {
+      "type": "load",
+      "persistence_threshold": 2.5,
+      "path": "datasets/wind/wind7.vti"
+    },
+    "wind8": {
+      "type": "load",
+      "persistence_threshold": 2.5,
+      "path": "datasets/wind/wind8.vti"
+    },
+    "wind9": {
+      "type": "load",
+      "persistence_threshold": 2.5,
+      "path": "datasets/wind/wind9.vti"
+    },
+    "wind10": {
+      "type": "load",
+      "persistence_threshold": 2.5,
+      "path": "datasets/wind/wind10.vti"
+    },
+    "wind11": {
+      "type": "load",
+      "persistence_threshold": 2.5,
+      "path": "datasets/wind/wind11.vti"
+    },
+    "wind12": {
+      "type": "load",
+      "persistence_threshold": 2.5,
+      "path": "datasets/wind/wind12.vti"
+    },
+    "wind13": {
+      "type": "load",
+      "persistence_threshold": 2.5,
+      "path": "datasets/wind/wind13.vti"
+    },
+    "wind14": {
+      "type": "load",
+      "persistence_threshold": 2.5,
+      "path": "datasets/wind/wind14.vti"
+    },
+    "wind15": {
+      "type": "load",
+      "persistence_threshold": 2.5,
+      "path": "datasets/wind/wind15.vti"
+    },
+    "redsea1": {
+      "type": "load",
+      "persistence_threshold": 0.01,
+      "path": "datasets/redSea/redSeaVelocity1.vti"
+    },
+    "redsea2": {
+      "type": "load",
+      "persistence_threshold": 0.01,
+      "path": "datasets/redSea/redSeaVelocity2.vti"
+    },
+    "redsea3": {
+      "type": "load",
+      "persistence_threshold": 0.01,
+      "path": "datasets/redSea/redSeaVelocity3.vti"
+    },
+    "redsea4": {
+      "type": "load",
+      "persistence_threshold": 0.01,
+      "path": "datasets/redSea/redSeaVelocity4.vti"
+    },
+    "redsea5": {
+      "type": "load",
+      "persistence_threshold": 0.01,
+      "path": "datasets/redSea/redSeaVelocity5.vti"
+    },
+    "redsea6": {
+      "type": "load",
+      "persistence_threshold": 0.01,
+      "path": "datasets/redSea/redSeaVelocity6.vti"
+    },
+    "redsea7": {
+      "type": "load",
+      "persistence_threshold": 0.01,
+      "path": "datasets/redSea/redSeaVelocity7.vti"
+    },
+    "redsea8": {
+      "type": "load",
+      "persistence_threshold": 0.01,
+      "path": "datasets/redSea/redSeaVelocity8.vti"
+    },
+    "redsea9": {
+      "type": "load",
+      "persistence_threshold": 0.01,
+      "path": "datasets/redSea/redSeaVelocity9.vti"
+    },
+    "redsea10": {
+      "type": "load",
+      "persistence_threshold": 0.01,
+      "path": "datasets/redSea/redSeaVelocity99.vti"
+    },
+    "navierstokes1": {
+      "type": "load",
+      "persistence_threshold": 0.1,
+      "path": "datasets/Navier-Stokes/speed1.vti"
+    },
+    "navierstokes2": {
+      "type": "load",
+      "persistence_threshold": 0.1,
+      "path": "datasets/Navier-Stokes/speed2.vti"
+    },
+    "navierstokes3": {
+      "type": "load",
+      "persistence_threshold": 0.1,
+      "path": "datasets/Navier-Stokes/speed3.vti"
+    },
+    "navierstokes4": {
+      "type": "load",
+      "persistence_threshold": 0.1,
+      "path": "datasets/Navier-Stokes/speed4.vti"
+    },
+    "navierstokes5": {
+      "type": "load",
+      "persistence_threshold": 0.1,
+      "path": "datasets/Navier-Stokes/speed5.vti"
+    },
+    "navierstokes6": {
+      "type": "load",
+      "persistence_threshold": 0.1,
+      "path": "datasets/Navier-Stokes/speed6.vti"
+    },
+    "navierstokes7": {
+      "type": "load",
+      "persistence_threshold": 0.1,
+      "path": "datasets/Navier-Stokes/speed7.vti"
     }
   }
 }
