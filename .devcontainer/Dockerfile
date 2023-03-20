@@ -25,5 +25,8 @@ RUN groupadd --gid ${USER_GID} ${USERNAME} \
   && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
   && chmod 0440 /etc/sudoers.d/${USERNAME}
 
+ENV PYTHONPATH /usr/lib/python3/dist-packages
+
 RUN python3 -m venv /home/${USERNAME}/.venv --system-site-packages \
-  && echo "source $HOME/.venv/bin/activate" >> /home/${USERNAME}/.bashrc
+  && chown -R ${USERNAME} /home/${USERNAME}/.venv \
+  && echo "source ~/.venv/bin/activate" >> /home/${USERNAME}/.bashrc
