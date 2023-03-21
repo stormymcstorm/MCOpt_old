@@ -1,4 +1,5 @@
-gen_data
+gen_complexes
+gen_figures
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -1,8 +1,0 @@
-numpy
-pandas
-scikit-image
-vtk
-networkx
-matplotlib
-ipykernel
-POT

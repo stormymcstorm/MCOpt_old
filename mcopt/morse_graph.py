@@ -1,68 +1,22 @@
+"""
+Representation and logic for working with Morse Graphs
+"""
 from __future__ import annotations
-from typing import  Tuple, Dict, Set, Optional
-import networkx as nx
+from typing import Set, Dict, Optional
+
 import numpy as np
+from numpy.typing import ArrayLike
 import pandas as pd
-import matplotlib as mpl
-from .morse_complex import MorseSmaleComplex
-from .opt import MeasureNetwork
+import networkx as nx
 
+from .morse_complex import MorseComplex
+from .ot.mm import MetricProbabilitySpace, Coupling
 
-def color_by_position(graph : MorseGraph) -> dict:
-  """
-  Constructs a `node_color` array where the color of a node determined it's position.
-  
-  Args:
-    graph (MorseGraph): The graph to generate a node coloring for.
-  """
-  return {n : np.linalg.norm(pos) for n, pos in graph.nodes(data='pos2')}
-
-def color_by_attr(graph : MorseGraph, attr : str) -> dict:
-  """
-  Constructs a `node_color` array where the color of a node is determined by the 
-  value of it's `attr` attribute.
-  
-  Args:
-    graph (MorseGraph): The graph to generate a node coloring for.
-    attr (str): The attribute to base the coloring off of.
-  """
-  return {n : int(v) for n, v in graph.nodes(data=attr)}
-
-def color_by_component(graph : MorseGraph) -> dict:
-  """
-  Constructs a `node_color` array  where the color of a node is determined by
-  the connected component it resides in, i.e. all nodes in the same component 
-  will have the same color. Works best when combined with a qualitative color 
-  map [see](https://matplotlib.org/stable/tutorials/colors/colormaps.html).
-  
-  This coloring is particularly useful for debugging.
-  
-  Args:
-    graph (MorseGraph): The graph to generate a node coloring for.
-  """
-  vals = {}
-  
-  for i, comp in enumerate(nx.connected_components(graph)):
-    for n in comp:
-      vals[n] = i
-  
-  return vals
-    
-# Takes in the raw vtk data and produces a mapping of the points which is easier
-# to work with.
-def _make_point_map(separatrices_points : pd.DataFrame, critical_points : pd.DataFrame):
+def _make_point_map(
+  separatrices_points: pd.DataFrame,
+  critical_points: pd.DataFrame
+):
   critical_cells = set(critical_points['CellId'])
-  
-  min_x, max_x = float('inf'), -float('inf')
-  min_y, max_y = float('inf'), -float('inf')
-  
-  for _, data in separatrices_points[['Points_0', 'Points_1']].iterrows():
-    x, y = data['Points_0'], data['Points_1']
-    
-    min_x = min(min_x, x)
-    max_x = max(max_x, x)
-    min_y = min(min_y, y)
-    max_y = max(max_y, y)
   
   separatrices_points = separatrices_points.sort_values(by=['Points_0', 'Points_1'])
   
@@ -76,126 +30,149 @@ def _make_point_map(separatrices_points : pd.DataFrame, critical_points : pd.Dat
     assert id not in point_map
     
     cell_id = data['CellId']
-    # Not sure exactly why, but this is only way to tell if a point is a critical point
     is_crit = data['ttkMaskScalarField'] == 0
     
     if is_crit and cell_id in cell_map:
-      # We have seen this critical point before
       node = cell_map[cell_id]
       nodes[node]['point_ids'].append(id)
       
       point_map[id] = node
       continue
-    elif is_crit:
-      # This is a new critical point
-      if cell_id not in critical_cells:
-        raise ValueError(f'Expected point {id}\'s cell {cell_id} to be in critical cells:\n{critical_cells}')
-        
-      cell_map[cell_id] = next_node
     
-    x, y = data['Points_0'], data['Points_1']
+    elif is_crit:
+      assert(cell_id in critical_cells)
       
+      cell_map[cell_id] = next_node
+      
+    x, y = data['Points_0'], data['Points_1']
     point_map[id] = next_node
     nodes[next_node] = {
-      'pos2': np.array([data['Points_0'], data['Points_1']]),
+      'pos2': np.array([x, y]),
       'point_ids': [id],
-      'is_critical': is_crit,
-      'on_boundary': x == min_x or x == max_x or y == min_y or y == max_y,
+      'is_critical': is_crit
     }
+    
     next_node += 1
     
   critical_nodes = set(cell_map.values())
-    
+  
   return nodes, point_map, critical_nodes
-  
+
 class MorseGraph(nx.Graph):
-  @staticmethod
-  def from_complex(complex: MorseSmaleComplex):
-    """
-    Creates a Morse Graph from a Morse Smale Complex.
-    
-    Args:
-      complex (MorseSmaleComplex): A Morse Smale Complex.
-      
-    Returns:
-      MorseGraph: A Morse Graph.
-    """
-    return MorseGraph.from_csvs(
-      complex.separatrices_cell_data, 
-      complex.separatrices_point_data, 
-      complex.critical_points_point_data
-    )
+  critical_nodes: Set[int]
   
   @staticmethod
-  def from_csvs(
-    separatrices_cells : pd.DataFrame, 
-    separatrices_points : pd.DataFrame, 
-    critical_points : pd.DataFrame
-  ):
+  def from_complex(complex : MorseComplex) -> MorseGraph:
+    separatrices_points = complex.separatrices_point_data
+    separatrices_cells = complex.separatrices_cell_data
+    critical_points = complex.critical_points_point_data
+    
     nodes, point_map, critical_nodes = _make_point_map(separatrices_points, critical_points)
     
     graph = MorseGraph(critical_nodes)
     graph.add_nodes_from(nodes.items())
-      
+    
     for _, cell_data in separatrices_cells.iterrows():
       graph.add_edge(
         point_map[cell_data['Point Index 0']],
         point_map[cell_data['Point Index 1']],
       )
-      
-    assert nx.is_connected(graph), "MorseGraph should be connected" 
-          
+    
+    assert nx.is_connected(graph), "MorseGraph should be connected"
+    
     return graph
   
-  critical_nodes : Set[int]
+  @staticmethod
+  def attribute_cost_matrix(
+    src: MorseGraph,
+    dest: MorseGraph
+  ) -> np.ndarray:
+    X = list(src.nodes())
+    X.sort()
     
-  def __init__(self, critical_nodes):
+    Y = list(dest.nodes())
+    Y.sort()
+    
+    X_attrs = list(src.nodes(data='pos2')[n] for n in X)
+    Y_attrs = list(dest.nodes(data='pos2')[n] for n in Y)
+    
+    M = np.zeros((len(X), len(Y)), dtype=float)
+    
+    for u_i, u in enumerate(X):
+      for v_i, v in enumerate(Y):
+        M[u_i, v_i] = np.linalg.norm(X_attrs[u_i] - Y_attrs[v_i])
+    
+    return M
+  
+  def __init__(self, critical_nodes : Set[int]):
     super().__init__()
     self.critical_nodes = critical_nodes
-          
+    
+  def color_by_position(self) -> Dict[int, float]:
+    return {n : np.linalg.norm(pos) for n, pos in self.nodes(data='pos2')}
+  
+  def color_by_coupling(
+    self,
+    src_colors : Dict[int, float],
+    coupling: Coupling
+  ) -> Dict[int, float]:
+    colors = {}
+    
+    for n in self.nodes():
+      i = coupling.dest_rev_map[n]
+      src_i = coupling[:, i].argmax()
+      
+      if (np.isclose(coupling[src_i, i], 0)):
+        colors[n] = np.nan
+      else:
+        src = coupling.src_map[src_i]
+        colors[n] = src_colors[src]
+    
+    return colors
+  
   def draw(
-    self, 
+    self,
     ax,
-    crit_scale = 3,
-    node_color = None,
+    critical_scale = 3,
+    node_color: Optional[Dict[int, float] | ArrayLike] = None,
     node_size = 10,
     **kwargs
-  ):        
+  ):
     kwargs.setdefault('cmap', 'viridis')
     
     if not node_color:
-      node_color = color_by_position(self)
+      node_color = self.color_by_position()
       
     if type(node_color) is dict:
       node_color = np.array([node_color[n] for n in self.nodes()])
-    
-    # Makes critical points larger
+      
     node_size = np.array([
-      node_size * crit_scale if n in self.critical_nodes else node_size for n in self.nodes()
+      node_size * critical_scale if n in self.critical_nodes else node_size
+      for n in self.nodes()
     ])
     
-    # Allows for nodes that should be given a "bad color" to have a `nan` value.
+    # Allow for nodes that should be given a "bad color" to have `nan` values.
     vmin = np.nanmin(node_color)
     vmax = np.nanmax(node_color)
     
     nx.draw(
-      self, 
+      self,
       ax = ax,
-      pos = self.nodes(data = 'pos2'),
+      pos = self.nodes(data='pos2'),
       node_size = node_size,
       node_color = node_color,
       
-      # These fields cause networkx_draw_nodes to plot as if `plotnonfinite=True`
       vmin=vmin,
       vmax=vmax,
       alpha=[1],
-      **kwargs,
+      **kwargs
     )
     
   def sample(self, rate, mode='step') -> MorseGraph:
     graph = MorseGraph(self.critical_nodes)
     
     visited = set()
+    
     def dfs(start, node, length=0):
       if node in visited and node not in self.critical_nodes:
         return
@@ -208,7 +185,7 @@ class MorseGraph(nx.Graph):
         
         if n in self.critical_nodes:
           graph.add_node(n, **self.nodes(data=True)[n])
-          
+
           assert graph.has_node(start)
           graph.add_edge(start, n)
           
@@ -216,9 +193,9 @@ class MorseGraph(nx.Graph):
         
         if mode == 'step':
           new_length = length + 1
-        if mode == 'geo_dist':
-          new_length = length + np.linalg.norm(self.nodes(data=True)[n]['pos2'] - self.nodes(data=True)[node]['pos2'])
-        
+        if mode == 'geo':
+          new_length = length + np.linalg.norm(self.nodes(data='pos2')[n] - self.nodes(data='pos2')[node])
+          
         if new_length > rate:
           graph.add_node(n, **self.nodes(data=True)[n])
           
@@ -228,79 +205,51 @@ class MorseGraph(nx.Graph):
           dfs(n, n)
         else:
           dfs(start, n, new_length)
-    
+          
     for crit in self.critical_nodes:
       graph.add_node(crit, **self.nodes(data=True)[crit])
-      
       dfs(crit, crit)
       
     assert nx.is_connected(graph)
     assert all(graph.has_node(n) for n in self.critical_nodes)
     
     return graph
-  
-  def to_measure_network(self, weight='path_length', hist='unif') -> MeasureNetwork:
+
+  def to_mp(self, dist='path_length', measure='uniform') -> MetricProbabilitySpace:
     X = np.array(self.nodes())
     X.sort()
     
-    if weight == 'path_length':
+    d = np.zeros(shape=(X.shape[0], X.shape[0]), dtype=float)
+    
+    if dist == 'path_length':
       lens = dict(nx.all_pairs_shortest_path_length(self))
-      
-      W = np.zeros((X.shape[0], X.shape[0]), dtype=float)
       
       for u_i, u in enumerate(X):
         for v_i, v in enumerate(X):
-           W[u_i,v_i] = lens[u][v]
-    elif weight == 'geo_dist':
+          d[u_i, v_i] = lens[u][v]
+    elif dist == 'geo_dist':
       lens = dict(nx.all_pairs_dijkstra_path_length(
-        self, 
+        self,
         weight=lambda u, v, _: np.linalg.norm(self.nodes(data='pos2')[u] - self.nodes(data='pos2')[v])
       ))
       
-      W = np.zeros((X.shape[0], X.shape[0]), dtype=float)
-      
       for u_i, u in enumerate(X):
         for v_i, v in enumerate(X):
-           W[u_i,v_i] = lens[u][v]
-    elif weight == 'adj':
-      W = np.zeros((X.shape[0], X.shape[0]), dtype=float)
-      
+          d[u_i, v_i] = lens[u][v]
+    elif dist == 'adj':
       for u_i, u in enumerate(X):
         for v_i, v in enumerate(X):
-           W[u_i,v_i] = int(v in self.adj[u])
+          d[u_i, v_i] =  int(v in self.adj[u])
     else:
-      raise ValueError(f'weight mode not supported {weight}')
+      raise ValueError(f'Unrecognized distance metric {dist}')
     
-    if hist == 'unif':
-      mu = np.ones(X.shape[0])/len(X)
-    elif hist == 'deg':
-      mu = np.array([self.degree(n) for n in X]) / sum([self.degree(n) for n in X])
+    if measure == 'uniform':
+      mu = np.ones(X.shape[0])/X.shape[0]
+    elif measure == 'degree':
+      degs = np.array([self.degree(n) for n in X]) 
+      
+      mu = degs / degs.sum()
     else:
-      raise ValueError(f'hist mode not supported {hist}')
+      raise ValueError(f'Unrecognized measure {measure}')
     
-    return X, W, mu
-
-def attribute_cost_mat(
-  X_graph: MorseGraph, 
-  Y_graph : MorseGraph, 
-  attr: str = 'pos2'
-) -> np.ndarray:
-  X = list(X_graph.nodes())
-  X.sort()
-  
-  Y = list(Y_graph.nodes())
-  Y.sort()
-  
-  if attr == 'pos2':
-    X_attrs = list(X_graph.nodes(data='pos2')[n] for n in X)
-    Y_attrs = list(Y_graph.nodes(data='pos2')[n] for n in Y)
-  else:
-    raise ValueError(f'attribute mode not supported {attr}')
-  
-  M = np.zeros((len(X), len(Y)), dtype=float)
-  
-  for u_i, u in enumerate(X):
-    for v_i, v in enumerate(Y):
-      M[u_i, v_i] = np.linalg.norm(X_attrs[u_i] - Y_attrs[v_i])
-  
-  return M
+    return MetricProbabilitySpace(X, d, mu)
