@@ -2,6 +2,7 @@
 Utilities for computations with TTK
 """
 
+from typing import Optional
 from importlib import import_module
 
 import vtk
@@ -13,7 +14,8 @@ except ImportError:
   
 def MorseSmaleComplex(
   input: vtk.vtkAlgorithmOutput,
-  persistence_threshold : float = 0
+  persistence_threshold : float = 0,
+  field_name: Optional[str] = None
 ) -> vtk.vtkAlgorithm:
   if ttk is None:
     raise ImportError('topologytoolkit required for MorseComplex Computation')
@@ -23,9 +25,14 @@ def MorseSmaleComplex(
   
   persistence_diagram = ttk.ttkPersistenceDiagram()
   persistence_diagram.SetInputConnection(tetra.GetOutputPort())
-  persistence_diagram.SetInputArrayToProcess(
-    0, 0, 0, 0, vtk.vtkDataSetAttributes.SCALARS
-  )
+  if field_name is None:
+    persistence_diagram.SetInputArrayToProcess(
+      0, 0, 0, 0, vtk.vtkDataSetAttributes.SCALARS
+    )
+  else:
+    persistence_diagram.SetInputArrayToProcess(
+      0, 0, 0, 0, field_name
+    )
   persistence_diagram.Update()
   
   critical_pairs = vtk.vtkThreshold()
@@ -46,15 +53,25 @@ def MorseSmaleComplex(
   
   simplification = ttk.ttkTopologicalSimplification()
   simplification.SetInputConnection(0, tetra.GetOutputPort())
-  simplification.SetInputArrayToProcess(
-    0, 0, 0, 0, vtk.vtkDataSetAttributes.SCALARS
-  )
+  if field_name is None:
+    simplification.SetInputArrayToProcess(
+      0, 0, 0, 0, vtk.vtkDataSetAttributes.SCALARS
+    )
+  else:
+    simplification.SetInputArrayToProcess(
+      0, 0, 0, 0, field_name
+    )
   simplification.SetInputConnection(1, persistent_pairs.GetOutputPort())
   
   complex = ttk.ttkMorseSmaleComplex()
   complex.SetInputConnection(simplification.GetOutputPort())
-  complex.SetInputArrayToProcess(
-    0, 0, 0, 0, vtk.vtkDataSetAttributes.SCALARS
-  )
+  if field_name is None:
+    complex.SetInputArrayToProcess(
+      0, 0, 0, 0, vtk.vtkDataSetAttributes.SCALARS
+    )
+  else:
+    complex.SetInputArrayToProcess(
+      0, 0, 0, 0, field_name
+    )
   
   return complex

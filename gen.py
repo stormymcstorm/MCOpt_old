@@ -78,8 +78,9 @@ def generate_complexes(complex_config):
       raise ValueError(f'Unrecognized complex type {ty}')
     
     persistence_threshold = conf['persistence_threshold']
+    scalar_field_name = conf['scalar_field_name'] if 'scalar_field_name' in conf else None
     
-    complex = MorseComplex.create(source, persistence_threshold)
+    complex = MorseComplex.create(source, persistence_threshold, field_name=scalar_field_name)
     complex.write(os.path.join(COMPLEXES_OUT, name))
     complexes[name] = complex
   

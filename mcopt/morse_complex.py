@@ -3,6 +3,7 @@ Representation and logic for working with Morse Complexes
 """
 
 from __future__ import annotations
+from typing import Optional
 from functools import cached_property
 import os
 
@@ -61,9 +62,10 @@ class MorseSmaleComplex:
   @staticmethod
   def create(
     input: vtk.vtkAlgorithmOutput,
-    persistence_threshold : float = 0
+    persistence_threshold : float = 0,
+    field_name: Optional[str] = None
   ) -> MorseSmaleComplex:
-    complex = ttk_util.MorseSmaleComplex(input, persistence_threshold)
+    complex = ttk_util.MorseSmaleComplex(input, persistence_threshold, field_name=field_name)
     
     critical_points = vtk.vtkPassThrough()
     critical_points.SetInputConnection(complex.GetOutputPort(0))
@@ -156,8 +158,9 @@ class MorseComplex(MorseSmaleComplex):
     input: vtk.vtkAlgorithmOutput,
     persistence_threshold: float = 0,
     ascending: bool = True,
+    field_name: Optional[str] = None
   ):
-    complex = ttk_util.MorseSmaleComplex(input, persistence_threshold)
+    complex = ttk_util.MorseSmaleComplex(input, persistence_threshold, field_name=field_name)
 
     complex.SetComputeCriticalPoints(True)
     complex.SetComputeAscendingSeparatrices1(False)

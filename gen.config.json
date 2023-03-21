@@ -201,6 +201,102 @@
       "type": "load",
       "persistence_threshold": 0.1,
       "path": "datasets/Navier-Stokes/speed7.vti"
+    },
+    "tangaroa1": {
+      "type": "load",
+      "persistence_threshold": 0.1,
+      "scalar_field_name": "velocityMagnitude",
+      "path": "datasets/tangaroa/data_51.vti"
+    },
+    "tangaroa2": {
+      "type": "load",
+      "persistence_threshold": 0.1,
+      "scalar_field_name": "velocityMagnitude",
+      "path": "datasets/tangaroa/data_60.vti"
+    },
+    "tangaroa3": {
+      "type": "load",
+      "persistence_threshold": 0.1,
+      "scalar_field_name": "velocityMagnitude",
+      "path": "datasets/tangaroa/data_70.vti"
+    },
+    "tangaroa4": {
+      "type": "load",
+      "persistence_threshold": 0.1,
+      "scalar_field_name": "velocityMagnitude",
+      "path": "datasets/tangaroa/data_80.vti"
+    },
+    "tangaroa5": {
+      "type": "load",
+      "persistence_threshold": 0.1,
+      "scalar_field_name": "velocityMagnitude",
+      "path": "datasets/tangaroa/data_90.vti"
+    },
+    "tangaroa6": {
+      "type": "load",
+      "persistence_threshold": 0.1,
+      "scalar_field_name": "velocityMagnitude",
+      "path": "datasets/tangaroa/data_100.vti"
+    },
+    "tangaroa7": {
+      "type": "load",
+      "persistence_threshold": 0.1,
+      "scalar_field_name": "velocityMagnitude",
+      "path": "datasets/tangaroa/data_110.vti"
+    },
+    "tangaroa8": {
+      "type": "load",
+      "persistence_threshold": 0.1,
+      "scalar_field_name": "velocityMagnitude",
+      "path": "datasets/tangaroa/data_120.vti"
+    },
+    "tangaroa9": {
+      "type": "load",
+      "persistence_threshold": 0.1,
+      "scalar_field_name": "velocityMagnitude",
+      "path": "datasets/tangaroa/data_130.vti"
+    },
+    "tangaroa10": {
+      "type": "load",
+      "persistence_threshold": 0.1,
+      "scalar_field_name": "velocityMagnitude",
+      "path": "datasets/tangaroa/data_140.vti"
+    },
+    "tangaroa11": {
+      "type": "load",
+      "persistence_threshold": 0.1,
+      "scalar_field_name": "velocityMagnitude",
+      "path": "datasets/tangaroa/data_150.vti"
+    },
+    "tangaroa12": {
+      "type": "load",
+      "persistence_threshold": 0.1,
+      "scalar_field_name": "velocityMagnitude",
+      "path": "datasets/tangaroa/data_160.vti"
+    },
+    "tangaroa13": {
+      "type": "load",
+      "persistence_threshold": 0.1,
+      "scalar_field_name": "velocityMagnitude",
+      "path": "datasets/tangaroa/data_170.vti"
+    },
+    "tangaroa14": {
+      "type": "load",
+      "persistence_threshold": 0.1,
+      "scalar_field_name": "velocityMagnitude",
+      "path": "datasets/tangaroa/data_180.vti"
+    },
+    "tangaroa15": {
+      "type": "load",
+      "persistence_threshold": 0.1,
+      "scalar_field_name": "velocityMagnitude",
+      "path": "datasets/tangaroa/data_190.vti"
+    },
+    "tangaroa16": {
+      "type": "load",
+      "persistence_threshold": 0.1,
+      "scalar_field_name": "velocityMagnitude",
+      "path": "datasets/tangaroa/data_200.vti"
     }
   }
 }
