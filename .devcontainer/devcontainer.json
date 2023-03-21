@@ -14,5 +14,7 @@
         "python.defaultInterpreterPath": "/home/vscode/.venv/bin/python"
       }
     }
-  }
+  },
+  // Uncomment this to enable gpu usage
+  // "runArgs": ["--gpus", "all"]
 }
