@@ -10,6 +10,7 @@ import pandas as pd
 import networkx as nx
 
 from .morse_complex import MorseComplex
+from .mm import MetricProbabilitySpace
 
 def _make_point_map(
   separatrices_points: pd.DataFrame,
@@ -172,3 +173,42 @@ class MorseGraph(nx.Graph):
     assert all(graph.has_node(n) for n in self.critical_nodes)
     
     return graph
+
+  def to_mp(self, dist='path_length', measure='uniform') -> MetricProbabilitySpace:
+    X = np.array(self.nodes())
+    X.sort()
+    
+    d = np.zeros(shape=(X.shape[0], X.shape[0]), dtype=float)
+    
+    if dist == 'path_length':
+      lens = dict(nx.all_pairs_shortest_path_length(self))
+      
+      for u_i, u in enumerate(X):
+        for v_i, v in enumerate(X):
+          d[u_i, v_i] = lens[u][v]
+    elif dist == 'geo_dist':
+      lens = dict(nx.all_pairs_dijkstra_path_length(
+        self,
+        weight=lambda u, v, _: np.linalg.norm(self.nodes(data='pos2')[u] - self.nodes(data='pos2')[v])
+      ))
+      
+      for u_i, u in enumerate(X):
+        for v_i, v in enumerate(X):
+          d[u_i, v_i] = lens[u][v]
+    elif dist == 'adj':
+      for u_i, u in enumerate(X):
+        for v_i, v in enumerate(X):
+          d[u_i, v_i] =  int(v in self.adj[u])
+    else:
+      raise ValueError(f'Unrecognized distance metric {dist}')
+    
+    if measure == 'uniform':
+      mu = np.ones(X.shape[0])/X.shape[0]
+    elif measure == 'degree':
+      degs = np.array([self.degree(n) for n in X]) 
+      
+      mu = degs / degs.sum()
+    else:
+      raise ValueError(f'Unrecognized measure {measure}')
+    
+    return MetricProbabilitySpace(X, d, mu)
