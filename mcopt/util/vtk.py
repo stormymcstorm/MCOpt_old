@@ -4,9 +4,10 @@ Utilities for computations with VTK
 
 from numpy.typing import ArrayLike
 import numpy as np
-
+import pandas as pd
 import vtk
 from vtk.util.numpy_support import numpy_to_vtk
+from vtk.numpy_interface import dataset_adapter as dsa
 
 def Warp(
   input: vtk.vtkAlgorithmOutput,
@@ -90,3 +91,48 @@ def WriteVTI(
   writer.SetInputConnection(input)
   writer.SetFileName(file_name)
   writer.Write()
+  
+def PolyCellDataToDataFrame(poly: vtk.vtkPolyData) -> pd.DataFrame:
+  adapter = dsa.WrapDataObject(poly)
+  
+  cells = pd.DataFrame(dict(adapter.CellData))
+  
+  cells.index.names = ['Cell Id']
+  cells['Cell Type'] = pd.Series(dtype='Int64')
+  
+  id_list = vtk.vtkIdList()
+  
+  for cell_id in range(cells.shape[0]):
+    poly.GetCellPoints(cell_id, id_list)
+    
+    for i in range(id_list.GetNumberOfIds()):
+      k = f'Point Index {i}'
+      
+      if k not in cells:
+        cells[k] = pd.Series(dtype='Int64')
+        
+      cells.at[cell_id, k] = id_list.GetId(i)
+    
+    cells.at[cell_id, 'Cell Type'] = poly.GetCellType(cell_id)
+  
+  return cells
+
+def PolyPointDataToDataFrame(poly: vtk.vtkPolyData) -> pd.DataFrame:
+  adapter = dsa.WrapDataObject(poly)
+  
+  points = pd.DataFrame(dict(adapter.PointData))
+  
+  points.index.names = ['Point ID']
+  points['Points_0'] = pd.Series(dtype='Float64')
+  points['Points_1'] = pd.Series(dtype='Float64')
+  points['Points_2'] = pd.Series(dtype='Float64')
+  
+  for point_id in range(points.shape[0]):
+    x, y, z = poly.GetPoint(point_id)
+    
+    points.at[point_id, 'Points_0'] = x
+    points.at[point_id, 'Points_1'] = y
+    points.at[point_id, 'Points_2'] = z
+  
+  return points
+  

@@ -3,9 +3,11 @@ Representation and logic for working with Morse Complexes
 """
 
 from __future__ import annotations
+from functools import cached_property
 import os
 
 import vtk
+import pandas as pd
 
 import mcopt.util.ttk as ttk_util
 import mcopt.util.vtk as vtk_util
@@ -114,6 +116,29 @@ class MorseSmaleComplex:
         self.segmentation.GetOutputPort(), 
         os.path.join(dir_name, 'segmentation.vti')
       )
+      
+    self.critical_points_point_data.to_csv(
+      os.path.join(dir_name, 'critical_points_point_data.csv')
+    )
+    
+    self.separatrices_cell_data.to_csv(
+      os.path.join(dir_name, 'separatrices_cell_data.csv')
+    )
+    self.separatrices_point_data.to_csv(
+      os.path.join(dir_name, 'separatrices_point_data.csv')
+    )
+  
+  @cached_property
+  def separatrices_point_data(self) -> pd.DataFrame:
+    return vtk_util.PolyPointDataToDataFrame(self.separatrices.GetOutput())
+  
+  @cached_property
+  def separatrices_cell_data(self) -> pd.DataFrame:
+    return vtk_util.PolyCellDataToDataFrame(self.separatrices.GetOutput())
+  
+  @cached_property
+  def critical_points_point_data(self) -> pd.DataFrame:
+    return vtk_util.PolyPointDataToDataFrame(self.critical_points.GetOutput())
   
 class MorseComplex(MorseSmaleComplex):
   @staticmethod
