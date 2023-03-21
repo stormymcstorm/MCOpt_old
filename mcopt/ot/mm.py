@@ -1,14 +1,14 @@
 
 from typing import TypeVar, Callable
 
-import numpy.typing as npt
+from numpy.typing import ArrayLike
 import numpy as np
 
 T = TypeVar('T')
 
-Space = npt.ArrayLike
-Metric = Callable[[T, T], float] | npt.ArrayLike
-Measure = Callable[[T], float] | npt.ArrayLike
+Space = ArrayLike
+Metric = Callable[[T, T], float] | ArrayLike
+Measure = Callable[[T], float] | ArrayLike
 
 class MetricMeasureSpace:
   space: np.ndarray
@@ -47,3 +47,21 @@ class MetricProbabilitySpace(MetricMeasureSpace):
     super().__init__(space, metric, measure)
     
     assert np.isclose(measure.sum(), 1), "Measure must sum to one"
+    
+class Coupling(np.ndarray):  
+  def __new__(cls, raw: np.ndarray, X: Space, Y: Space):
+    obj = np.asarray(raw, dtype=float).view(cls)    
+    obj.src_map = {i : n for i, n in enumerate(X)}
+    obj.src_rev_map = {n : i for i, n in enumerate(X)}
+    obj.dest_map = {i : n for i, n in enumerate(X)}
+    obj.dest_rev_map = {n : i for i, n in enumerate(Y)}
+    
+    return obj
+  
+  def __array_finalize__(self, obj):
+    if obj is None: return
+    
+    self.src_map = getattr(obj, 'src_map', None)
+    self.src_map = getattr(obj, 'src_rev_map', None)
+    self.dest_map = getattr(obj, 'dest_map', None)
+    self.dest_map = getattr(obj, 'dest_rev_map', None)

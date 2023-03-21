@@ -33,6 +33,8 @@ def generate_complexes(complex_config):
   for name, conf in complex_config.items():
     ty = conf['type']
     
+    print(f'Generating {name} complex')
+    
     if ty == 'gen':
       shape = conf['shape']
       layers = conf['layers']

@@ -10,7 +10,7 @@ import pandas as pd
 import networkx as nx
 
 from .morse_complex import MorseComplex
-from .mm import MetricProbabilitySpace
+from .ot.mm import MetricProbabilitySpace, Coupling
 
 def _make_point_map(
   separatrices_points: pd.DataFrame,
@@ -82,12 +82,53 @@ class MorseGraph(nx.Graph):
     
     return graph
   
+  @staticmethod
+  def attribute_cost_matrix(
+    src: MorseGraph,
+    dest: MorseGraph
+  ) -> np.ndarray:
+    X = list(src.nodes())
+    X.sort()
+    
+    Y = list(dest.nodes())
+    Y.sort()
+    
+    X_attrs = list(src.nodes(data='pos2')[n] for n in X)
+    Y_attrs = list(dest.nodes(data='pos2')[n] for n in Y)
+    
+    M = np.zeros((len(X), len(Y)), dtype=float)
+    
+    for u_i, u in enumerate(X):
+      for v_i, v in enumerate(Y):
+        M[u_i, v_i] = np.linalg.norm(X_attrs[u_i] - Y_attrs[v_i])
+    
+    return M
+  
   def __init__(self, critical_nodes : Set[int]):
     super().__init__()
     self.critical_nodes = critical_nodes
     
   def color_by_position(self) -> Dict[int, float]:
     return {n : np.linalg.norm(pos) for n, pos in self.nodes(data='pos2')}
+  
+  def color_by_coupling(
+    self,
+    src_colors : Dict[int, float],
+    coupling: Coupling
+  ) -> Dict[int, float]:
+    colors = {}
+    
+    for n in self.nodes():
+      i = coupling.dest_rev_map[n]
+      src_i = coupling[:, i].argmax()
+      
+      if (np.isclose(coupling[src_i, i], 0)):
+        colors[n] = np.nan
+      else:
+        src = coupling.src_map[src_i]
+        colors[n] = src_colors[src]
+    
+    return colors
   
   def draw(
     self,
