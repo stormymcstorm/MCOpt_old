@@ -1,6 +1,6 @@
 - [x] Complex Generation
 - [x] Generate Morse Graphs
-- [ ] Implement OT
+- [x] Implement OT
 - [ ] Rewrite README
 - [ ] Generate Figures Automatically
 - [ ] GPU acceleration
