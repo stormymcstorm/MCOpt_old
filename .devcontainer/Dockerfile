@@ -30,3 +30,9 @@ ENV PYTHONPATH /usr/lib/python3/dist-packages
 RUN python3 -m venv /home/${USERNAME}/.venv --system-site-packages \
   && chown -R ${USERNAME} /home/${USERNAME}/.venv \
   && echo "source ~/.venv/bin/activate" >> /home/${USERNAME}/.bashrc
+
+COPY preinstall.txt /tmp/requirements.txt
+
+USER ${USERNAME}
+
+RUN pip install -r /tmp/requirements.txt
