@@ -5,10 +5,12 @@ Implementation of GW optimal transport
 from typing import Optional, Tuple
 
 import numpy as np
+import torch
 from scipy import stats
 from scipy.sparse import random
+from unbalancedgw import log_ugw_sinkhorn
 
-from mcopt.ot.mm import MetricProbabilitySpace, Coupling
+from mcopt.ot.mm import MetricProbabilitySpace, MetricMeasureSpace, Coupling
 from mcopt.ot.bregman import sinkhorn_scaling
 from mcopt.ot.optim import cg, pcg, NonConvergenceError
 
@@ -291,3 +293,24 @@ def fpGW(
   **kwargs
 ):
   return pGW(X, Y, m, M, alpha=alpha, **kwargs)
+
+def uGW(
+  X: MetricMeasureSpace,
+  Y: MetricMeasureSpace,
+  G0 : Optional[np.ndarray] = None,
+  **kwargs
+):
+  d_X = torch.from_numpy(X.metric)
+  d_Y = torch.from_numpy(Y.metric)
+  
+  mu = torch.from_numpy(X.measure)
+  nu = torch.from_numpy(Y.measure)
+  
+  if G0 is not None:
+    G0 = torch.from_numpy(G0)
+  
+  raw_coupling = log_ugw_sinkhorn(
+    mu, d_X, nu, d_Y, init=G0, **kwargs
+  )
+  
+  return Coupling(raw_coupling, X.space, Y.space)
