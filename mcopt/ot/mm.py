@@ -107,7 +107,7 @@ class MetricMeasureHypernetwork:
     
     return MetricMeasureNetwork(space, metric, measure)
 
-class MetricProbabilityHypernetwork:
+class MetricProbabilityHypernetwork(MetricMeasureHypernetwork):
   node_space: Space
   node_measure: Measure
   edge_space: Space

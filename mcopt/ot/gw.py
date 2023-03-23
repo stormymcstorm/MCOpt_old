@@ -9,6 +9,7 @@ import torch
 from scipy import stats
 from scipy.sparse import random
 from unbalancedgw import log_ugw_sinkhorn
+from ot.optim import emd
 
 from mcopt.ot.mm import (
   MetricProbabilitySpace, 
@@ -18,7 +19,7 @@ from mcopt.ot.mm import (
   Coupling
 )
 from mcopt.ot.bregman import sinkhorn_scaling
-from mcopt.ot.optim import cg, cot, pcg, NonConvergenceError
+from mcopt.ot.optim import cg, pcg, NonConvergenceError
 
 def make_random_G0(mu, nu, random_state=None, **kwargs):
   rvs = stats.beta(1e-1, 1e-1).rvs
@@ -42,15 +43,27 @@ def _gw_init_matrix(d_X, d_Y, mu, nu, loss_fun):
   else:
     raise ValueError(f'Unrecognized loss_fun: {loss_fun}')
   
+  fd_X = f1(d_X)
+  fd_Y = f2(d_Y)
+  
   constC1 = np.dot(
-    np.dot(f1(d_X), np.reshape(mu, (-1, 1))),
-    np.ones((1, len(nu)))
+    np.dot(fd_X, mu.reshape(-1, 1)),
+    np.ones(fd_Y.shape[0]).reshape(1, -1)
   )
+  # constC1 = np.dot(
+  #   np.dot(f1(d_X), np.reshape(mu, (-1, 1))),
+  #   np.ones((1, len(nu)))
+  # )
   
   constC2 = np.dot(
-    np.ones((len(mu), 1)),
-    np.dot(np.reshape(nu, (1, -1)), f2(d_Y).T)
+    np.ones(fd_X.shape[0]).reshape(-1, 1),
+    np.dot(nu.reshape(1, -1), fd_Y.T)
   )
+  
+  # constC2 = np.dot(
+  #   np.ones((len(mu), 1)),
+  #   np.dot(np.reshape(nu, (1, -1)), f2(d_Y).T)
+  # )
   
   constC = constC1 + constC2
   hC1 = h1(d_X)
@@ -328,6 +341,9 @@ def cGW(
   G0_edges : Optional[np.ndarray] = None,
   loss_fun: str = 'square_loss',
   log=False,
+  verbose=False,
+  numItermax: int = 200,
+  numItermaxEmd: int = 100000,
   random_G0: bool = False,
   random_state=None,
   num_rand_iter: int = 10,
@@ -343,28 +359,43 @@ def cGW(
     assert num_rand_iter > 0
     
     for _ in range(num_rand_iter):
+      rng = np.random.default_rng(random_state)
+      
       mu_X = X.node_measure
       mu_Y = Y.node_measure
       nu_X = X.edge_measure
       nu_Y = Y.edge_measure
       
-      G0_nodes = make_random_G0(mu_X, mu_Y, random_state=random_state)
-      G0_edges = make_random_G0(nu_X, nu_Y, random_state=random_state)
+      G0_nodes = make_random_G0(mu_X, mu_Y, random_state=rng)
+      G0_edges = make_random_G0(nu_X, nu_Y, random_state=rng)
       
-      c, dist = cGW(
-        X, Y,
-        G0_nodes=G0_nodes, 
-        G0_edges=G0_edges,
-        log=log, 
-        random_G0=False,
-        **kwargs
-      )
+      if log:
+        *c, dist, log = cGW(
+          X, Y,
+          G0_nodes=G0_nodes, 
+          G0_edges=G0_edges,
+          log=log, 
+          random_G0=False,
+          **kwargs
+        )
+      else:
+        *c, dist = cGW(
+          X, Y,
+          G0_nodes=G0_nodes, 
+          G0_edges=G0_edges,
+          log=False, 
+          random_G0=False,
+          **kwargs
+        )
       
       if dist < min_dist:
         coupling = c
         min_dist = dist
     
-    return coupling, min_dist
+    if log:
+      return *coupling, min_dist, log
+    else:
+      return *coupling, min_dist
     
   d_X = X.metric
   d_Y = Y.metric
@@ -374,24 +405,73 @@ def cGW(
   nu_X = X.edge_measure
   nu_Y = Y.edge_measure
   
-  constC_nodes, hC1_nodes, hC2_nodes = _gw_init_matrix(d_X.T, d_Y.T, mu_X, mu_Y, loss_fun)
-  constC_edges, hC1_edges, hC2_edges = _gw_init_matrix(d_X.T, d_Y.T, nu_X, nu_Y, loss_fun)
-  
-  def f_nodes(G_nodes):
-    return _gw_loss(constC_nodes, hC1_nodes, hC2_nodes, G_nodes)
-  
-  def df_nodes(G_nodes):
-    return 0.5 * _gw_grad(constC_nodes, hC1_nodes, hC2_nodes, G_nodes)
-  
-  def f_edges(G_edges):
-    return _gw_loss(constC_edges, hC1_edges, hC2_edges, G_edges)
-  
-  def df_edges(G_edges):
-    return 0.5 * _gw_grad(constC_edges, hC1_edges, hC2_edges, G_edges)
+  constC_nodes, hC1_nodes, hC2_nodes = _gw_init_matrix(d_X, d_Y, nu_X, nu_Y, loss_fun)
+  constC_edges, hC1_edges, hC2_edges = _gw_init_matrix(d_X.T, d_Y.T, mu_X, mu_Y, loss_fun)
  
-  out = cot(
-    mu_X, nu_X, mu_Y, mu_X, f_nodes, df_nodes, f_edges, df_edges,
-    G0_s=G0_nodes, G0_v=G0_edges, log=log, **kwargs
-  )
+  if log:
+    log = {'cost': []}
     
-  return out
+  if G0_nodes is None:
+    G0_nodes = np.outer(mu_X, mu_Y)
+  else:
+    assert G0_nodes.ndim == 2
+    assert G0_nodes.shape[0] == mu_X.shape[0]
+    assert G0_nodes.shape[1] == mu_Y.shape[0]
+    
+  if G0_edges is None:
+    G0_edges = np.outer(nu_X, nu_Y)
+  else:
+    assert G0_edges.ndim == 2
+    assert G0_edges.shape[0] == nu_X.shape[0]
+    assert G0_edges.shape[1] == nu_Y.shape[0]
+  
+  G_nodes = G0_nodes
+  G_edges = G0_edges
+  
+  cost = np.inf
+  
+  it = 0
+  
+  if verbose:
+    print('{:5s}|{:12s}'.format('It.', 'Loss') + '\n' + '-' * 32)
+    print('{:5d}|{:8e}'.format(it, cost))
+  
+  loop = True
+  while loop:
+    it += 1
+    Gn_old = G_nodes
+    Ge_old = G_edges
+    cost_old = cost
+    
+    M = constC_nodes - np.dot(hC1_nodes, G_edges).dot(hC2_nodes.T)
+    G_nodes = emd(mu_X, mu_Y, M, numItermax=numItermaxEmd, log=False)
+    
+    M = constC_edges - np.dot(hC1_edges, G_nodes).dot(hC2_edges.T)
+    G_edges = emd(nu_X, nu_Y, M, numItermax=numItermaxEmd, log=False)
+    
+    cost = np.sum(M * G_edges)
+    
+    if log:
+      log['cost'].append(cost)
+      
+    if verbose:
+      print('{:5s}|{:12s}'.format('It.', 'Loss') 
+            + '\n' + '-' * 32)
+      print('{:5d}|{:8e}'.format(it, cost))
+      
+    if it >= numItermax:
+      break
+    
+    delta = np.linalg.norm(G_nodes - Gn_old) + np.linalg.norm(G_edges - Ge_old)
+    
+    if delta < 1e-16 or np.abs(cost_old - cost) < 1e-7:
+      break
+  
+  node_coupling = Coupling(G_nodes, X.node_space, Y.node_space)
+  edge_coupling = Coupling(G_edges, X.edge_space, Y.edge_space)
+  dist = cost
+    
+  if log:
+    return node_coupling, edge_coupling, dist, log
+  else:
+    return node_coupling, edge_coupling, dist

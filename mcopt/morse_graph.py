@@ -12,7 +12,7 @@ import hypernetx as hnx
 import matplotlib
 
 from .morse_complex import MorseComplex
-from .ot.mm import MetricProbabilityNetwork, MetricMeasureHypernetwork, Coupling
+from .ot.mm import MetricProbabilityNetwork, MetricProbabilityHypernetwork, Coupling
 
 def _make_point_map(
   separatrices_points: pd.DataFrame,
@@ -278,6 +278,8 @@ class MorseHypergraph(hnx.Hypergraph):
     else:
       raise ValueError(f'Unrecognized construction {construction}')
     
+    edges = {i : e for i, e in enumerate(edges)}
+    
     return MorseHypergraph(edges, critical_nodes, node_data)
   
   def __init__(self, edges, critical_nodes, node_data):
@@ -288,18 +290,56 @@ class MorseHypergraph(hnx.Hypergraph):
   def node_color_by_position(self) -> Dict[int, float]:
     return {n : np.linalg.norm(data['pos2']) for n, data in self.node_data.items()}
   
-  def edge_color_by_nodes(self, node_color: Dict[int, float]) -> Dict[str, float]:
+  def node_color_by_coupling(
+    self,
+    src_colors : Dict[int, float],
+    coupling: Coupling
+  ) -> Dict[int, float]:
+    colors = {}
+    
+    for n in self.nodes:
+      i = coupling.dest_rev_map[n]
+      src_i = coupling[:, i].argmax()
+      
+      if (np.isclose(coupling[src_i, i], 0)):
+        colors[n] = np.nan
+      else:
+        src = coupling.src_map[src_i]
+        colors[n] = src_colors[src]
+    
+    return colors
+  
+  def edge_color_by_nodes(self, node_color: Dict[int, float]) -> Dict[int, float]:
     return {
       e : sum([node_color[n] for n in nodes]) / len(nodes) 
       for e, nodes in self.incidence_dict.items()
     }
+    
+  def edge_color_by_coupling(
+    self,
+    src_colors: Dict[int, float],
+    coupling: Coupling
+  ) -> Dict[int, float]:
+    colors = {}
+    
+    for e in self.incidence_dict.keys():
+      i = coupling.dest_rev_map[e]
+      src_i = coupling[:, i].argmax()
+      
+      if (np.isclose(coupling[src_i, i], 0)):
+        colors[e] = np.nan
+      else:
+        src = coupling.src_map[src_i]
+        colors[e] = src_colors[src]
+    
+    return colors
     
   def draw(self,
     ax,
     critical_scale = 1.3,
     node_color: Optional[Dict[int, float] | ArrayLike] = None,
     edge_color: Optional[Dict[int, float] | ArrayLike] = None,
-    node_size = 10,
+    node_size = 20,
     cmap = None,
   ):
     if cmap is None:
@@ -308,7 +348,7 @@ class MorseHypergraph(hnx.Hypergraph):
     if isinstance(cmap, str):
       cmap = matplotlib.colormaps[cmap]
     
-    node_radius = node_size / 20
+    node_radius = node_size / 40
     node_radius = {
       n: node_radius * critical_scale if n in self.critical_nodes else node_radius
       for n in self.nodes
@@ -357,5 +397,75 @@ class MorseHypergraph(hnx.Hypergraph):
       }
     )
   
-  def to_mph(self, dist='', node_measure='uniform', edge_measure='uniform') -> MetricMeasureHypernetwork:
-    pass
+  def to_mph(self, dist='jaccard_index', node_measure='uniform', edge_measure='uniform') -> MetricProbabilityHypernetwork:
+    node_space = np.asarray(self.nodes)
+    node_space.sort()
+    
+    if node_measure == 'uniform':
+      node_measure = np.ones(len(node_space)) / len(node_space)
+    else:
+      raise ValueError(f'Unrecognized node_measure {node_measure}')
+    
+    edge_space = np.asarray(self.edges)
+    
+    if edge_measure == 'uniform':
+      edge_measure = np.ones(len(edge_space)) / len(edge_space)
+    else:
+      raise ValueError(f'Unrecognized edge_measure {edge_measure}')
+    
+    if dist == 'incidence':
+      metric = self.incidence_matrix().astype(float).todense()
+    else:
+      metric = self._get_omega(dist)
+    
+    return MetricProbabilityHypernetwork(node_space, node_measure, edge_space, edge_measure, metric)
+
+  def _line_graph(self):
+    hgraph_dict = self.incidence_dict
+    line_graph = nx.Graph()
+
+    node_list = list(hgraph_dict.keys())
+    node_list.sort() # sort the node by id
+    # Add nodes
+    [line_graph.add_node(edge) for edge in node_list]
+
+    # For all pairs of edges (e1, e2), add edges such that
+    # intersection(e1, e2) is not empty
+    s = 1
+    for node_idx_1, node1 in enumerate(node_list):
+      for node_idx_2, node2 in enumerate(node_list[node_idx_1 + 1:]):
+        vertices1 = hgraph_dict[node1]
+        vertices2 = hgraph_dict[node2]
+        if len(vertices1) > 0 or len(vertices2) > 0:
+          # Compute the intersection size
+          intersection_size = len(set(vertices1) & set(vertices2))
+          union_size = len(set(vertices1) | set(vertices2))
+          jaccard_index = intersection_size / union_size
+          if intersection_size >= s:
+            line_graph.add_edge(node1, node2, intersection_size=1/intersection_size, jaccard_index=1/jaccard_index)
+    # line_graph = nx.readwrite.json_graph.node_link_data(line_graph)
+    return line_graph
+
+  def _get_omega(self, weight_type):
+    lg = self._line_graph()
+    dual = self.dual()
+    
+    num_nodes, num_edges = self.shape
+    nodes = sorted(list(self.nodes))
+    
+    try:
+      weights = nx.adjacency_matrix(lg, weight=weight_type).A
+    except:
+      return "weight type doesn't exist!"
+    
+    ldist = nx.floyd_warshall_numpy(lg,weight=weight_type) # May have inf 
+    
+    w = np.zeros((num_nodes, num_edges))
+    for i,node in enumerate(nodes):
+      # node = str(i) # Important that hypergraph nodes were formatted this way
+      # all hyperedges containing the node
+      idxs = list(dual.incidence_dict[node])
+      shortest_target_dists = ldist[idxs,:].min(axis=0)
+      w[i,:] = shortest_target_dists
+        
+    return w
