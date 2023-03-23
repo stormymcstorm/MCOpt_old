@@ -2,15 +2,17 @@
 Representation and logic for working with Morse Graphs
 """
 from __future__ import annotations
-from typing import Set, Dict, Optional
+from typing import Set, Dict, Optional, Any
 
 import numpy as np
 from numpy.typing import ArrayLike
 import pandas as pd
 import networkx as nx
+import hypernetx as hnx
+import matplotlib
 
 from .morse_complex import MorseComplex
-from .ot.mm import MetricProbabilitySpace, Coupling
+from .ot.mm import MetricProbabilityNetwork, MetricMeasureHypernetwork, Coupling
 
 def _make_point_map(
   separatrices_points: pd.DataFrame,
@@ -215,7 +217,7 @@ class MorseGraph(nx.Graph):
     
     return graph
 
-  def to_mp(self, dist='path_length', measure='uniform') -> MetricProbabilitySpace:
+  def to_mp(self, dist='path_length', measure='uniform') -> MetricProbabilityNetwork:
     X = np.array(self.nodes())
     X.sort()
     
@@ -253,3 +255,107 @@ class MorseGraph(nx.Graph):
       raise ValueError(f'Unrecognized measure {measure}')
     
     return MetricProbabilitySpace(X, d, mu)
+  
+class MorseHypergraph(hnx.Hypergraph):
+  critical_nodes: Set[int]
+  node_data: Dict[int, Dict[str, Any]]
+  
+  @staticmethod
+  def from_graph(graph: MorseGraph, construction = 'simple'):
+    node_data = dict(graph.nodes(data=True))
+    critical_nodes = graph.critical_nodes
+    
+    edges = []
+    
+    if construction == 'simple':
+      for edge in graph.edges():
+        edges.append((edge[0], edge[1]))
+    elif construction == 'neighbors':
+      for node in graph.nodes():
+        neighbors = list(graph.neighbors(node))
+        neighbors.append(node)
+        edges.append(neighbors)
+    else:
+      raise ValueError(f'Unrecognized construction {construction}')
+    
+    return MorseHypergraph(edges, critical_nodes, node_data)
+  
+  def __init__(self, edges, critical_nodes, node_data):
+    super().__init__(edges, static=True)
+    self.critical_nodes = critical_nodes
+    self.node_data = node_data
+    
+  def node_color_by_position(self) -> Dict[int, float]:
+    return {n : np.linalg.norm(data['pos2']) for n, data in self.node_data.items()}
+  
+  def edge_color_by_nodes(self, node_color: Dict[int, float]) -> Dict[str, float]:
+    return {
+      e : sum([node_color[n] for n in nodes]) / len(nodes) 
+      for e, nodes in self.incidence_dict.items()
+    }
+    
+  def draw(self,
+    ax,
+    critical_scale = 1.3,
+    node_color: Optional[Dict[int, float] | ArrayLike] = None,
+    edge_color: Optional[Dict[int, float] | ArrayLike] = None,
+    node_size = 10,
+    cmap = None,
+  ):
+    if cmap is None:
+      cmap = 'viridis'
+      
+    if isinstance(cmap, str):
+      cmap = matplotlib.colormaps[cmap]
+    
+    node_radius = node_size / 20
+    node_radius = {
+      n: node_radius * critical_scale if n in self.critical_nodes else node_radius
+      for n in self.nodes
+    }
+    
+    if node_color is None:
+      node_color = self.node_color_by_position()
+      
+    if type(node_color) is dict:
+      node_color_lookup = node_color
+      node_color = np.array([node_color[n] for n in self.nodes])
+    else:
+      node_color_lookup = {i : v for i, v in enumerate(node_color)}
+      node_color = np.asarray(node_color)
+      
+    node_color /= node_color.max()
+    node_facecolors = [cmap(v) for v in node_color]
+    
+    if edge_color is None:
+      edge_color = self.edge_color_by_nodes(node_color_lookup)
+      
+    if type(edge_color) is dict:
+      edge_color = np.array([edge_color[e] for e in self.edges])
+    else:
+      edge_color = np.asarray(edge_color)  
+    
+    edge_color /= edge_color.max()
+    edge_facecolors = [cmap(v, alpha=0.5) for v in edge_color]
+    
+    hnx.rubber_band.draw(
+      self,
+      ax=ax,
+      pos = {n : data['pos2'] for n, data in self.node_data.items()},
+      node_radius=node_radius,
+      with_color=False,
+      with_edge_labels=False,
+      with_node_labels=False,
+      nodes_kwargs={
+        'facecolors': node_facecolors,
+        'edgecolors': 'black', 
+      },
+      edges_kwargs={
+        'edgecolors': (0, 0, 0, 0),
+        'facecolors': edge_facecolors,
+        'dr': 0.1
+      }
+    )
+  
+  def to_mph(self, dist='', node_measure='uniform', edge_measure='uniform') -> MetricMeasureHypernetwork:
+    pass

@@ -10,9 +10,15 @@ from scipy import stats
 from scipy.sparse import random
 from unbalancedgw import log_ugw_sinkhorn
 
-from mcopt.ot.mm import MetricProbabilitySpace, MetricMeasureSpace, Coupling
+from mcopt.ot.mm import (
+  MetricProbabilitySpace, 
+  MetricMeasureSpace, 
+  MetricMeasureHypernetwork,
+  MetricProbabilityHypernetwork, 
+  Coupling
+)
 from mcopt.ot.bregman import sinkhorn_scaling
-from mcopt.ot.optim import cg, pcg, NonConvergenceError
+from mcopt.ot.optim import cg, cot, pcg, NonConvergenceError
 
 def make_random_G0(mu, nu, random_state=None, **kwargs):
   rvs = stats.beta(1e-1, 1e-1).rvs
@@ -314,3 +320,78 @@ def uGW(
   )
   
   return Coupling(raw_coupling, X.space, Y.space)
+
+def cGW(
+  X: MetricProbabilityHypernetwork,
+  Y: MetricProbabilityHypernetwork,
+  G0_nodes : Optional[np.ndarray] = None,
+  G0_edges : Optional[np.ndarray] = None,
+  loss_fun: str = 'square_loss',
+  log=False,
+  random_G0: bool = False,
+  random_state=None,
+  num_rand_iter: int = 10,
+  **kwargs
+):
+  if random_G0:
+    assert G0_nodes is None
+    assert G0_edges is None
+    
+    min_dist = float('inf')
+    coupling = None
+    
+    assert num_rand_iter > 0
+    
+    for _ in range(num_rand_iter):
+      mu_X = X.node_measure
+      mu_Y = Y.node_measure
+      nu_X = X.edge_measure
+      nu_Y = Y.edge_measure
+      
+      G0_nodes = make_random_G0(mu_X, mu_Y, random_state=random_state)
+      G0_edges = make_random_G0(nu_X, nu_Y, random_state=random_state)
+      
+      c, dist = cGW(
+        X, Y,
+        G0_nodes=G0_nodes, 
+        G0_edges=G0_edges,
+        log=log, 
+        random_G0=False,
+        **kwargs
+      )
+      
+      if dist < min_dist:
+        coupling = c
+        min_dist = dist
+    
+    return coupling, min_dist
+    
+  d_X = X.metric
+  d_Y = Y.metric
+  
+  mu_X = X.node_measure
+  mu_Y = Y.node_measure
+  nu_X = X.edge_measure
+  nu_Y = Y.edge_measure
+  
+  constC_nodes, hC1_nodes, hC2_nodes = _gw_init_matrix(d_X.T, d_Y.T, mu_X, mu_Y, loss_fun)
+  constC_edges, hC1_edges, hC2_edges = _gw_init_matrix(d_X.T, d_Y.T, nu_X, nu_Y, loss_fun)
+  
+  def f_nodes(G_nodes):
+    return _gw_loss(constC_nodes, hC1_nodes, hC2_nodes, G_nodes)
+  
+  def df_nodes(G_nodes):
+    return 0.5 * _gw_grad(constC_nodes, hC1_nodes, hC2_nodes, G_nodes)
+  
+  def f_edges(G_edges):
+    return _gw_loss(constC_edges, hC1_edges, hC2_edges, G_edges)
+  
+  def df_edges(G_edges):
+    return 0.5 * _gw_grad(constC_edges, hC1_edges, hC2_edges, G_edges)
+ 
+  out = cot(
+    mu_X, nu_X, mu_Y, mu_X, f_nodes, df_nodes, f_edges, df_edges,
+    G0_s=G0_nodes, G0_v=G0_edges, log=log, **kwargs
+  )
+    
+  return out
