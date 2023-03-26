@@ -1,0 +1,21 @@
+{
+  "name": "MCOpt Devcontainer",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "remoteUser": "vscode",
+  "postStartCommand": "pip install -e .",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "bungcip.better-toml"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/home/vscode/.venv/bin/python"
+      }
+    }
+  },
+  // Uncomment this to enable gpu usage
+  // "runArgs": ["--gpus", "all"]
+}
