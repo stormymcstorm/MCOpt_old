@@ -212,7 +212,7 @@ def pcg(
   elif m < 0:
     raise ValueError("Problem infeasible. Parameter m should be greater"
                      " than 0.")
-  elif m >  np.min((np.sum(a), np.sum(b))):
+  elif m >  np.min((np.sum(a), np.sum(b))) and not np.isclose(m, np.min((np.sum(a), np.sum(b)))):
     raise ValueError("Problem infeasible. Parameter m should lower or"
                      " equal than min(|a|_1, |b|_1).")
   
