@@ -8,7 +8,7 @@ from importlib import import_module
 import vtk
 
 try:
-  ttk = import_module('topologytoolkit')
+  import topologytoolkit as ttk
 except ImportError:
   ttk = None
 
@@ -17,9 +17,6 @@ def MorseSmaleComplex(
   persistence_threshold: float = 0,
   field_name: Optional[str] = None
 ):
-  if ttk is None:
-    raise ImportError('topologytoolkit required for Morse Complex Computation')
-  
   tetra = vtk.vtkDataSetTriangleFilter()
   tetra.SetInputConnection(input)
   
