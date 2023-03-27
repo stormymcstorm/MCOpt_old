@@ -45,9 +45,9 @@
         {"type": "warp", "args": {"scale_factor": 50}}
       ]
     },
-    "tropoause": {
+    "tropopause": {
       "type": "load",
-      "src": "https://www.dropbox.com/s/tscfc32bskuotiu/Tropoause-VISContest.zip?dl=1",
+      "src": "https://www.dropbox.com/s/tscfc32bskuotiu/tropoause-VISContest.zip?dl=1",
       "frames": "Tropoause-VISContest_*.vtk"
     },
     "heated_cylinder": {
@@ -98,8 +98,8 @@
       "dataset": "sinusoidal_noisy",
       "persistence_threshold": 0.1
     },
-    "tropoause": {
-      "dataset": "tropoause",
+    "tropopause": {
+      "dataset": "tropopause",
       "persistence_threshold": 2.5,
       "field_name": "trop_1"
     },
@@ -139,8 +139,8 @@
       "complex": "navier_stokes",
       "sample_rate": 5
     },
-    "tropoause": {
-      "complex": "tropoause",
+    "tropopause": {
+      "complex": "tropopause",
       "sample_rate": 10,
       "sample_mode": "geo"
     },
@@ -171,17 +171,58 @@
       "title": "Navier Stokes Dataset",
       "ax_prefix": "Navier Stokes"
     },
-    "tropoause_graphs": {
+    "tropopause_graphs": {
       "type": "draw_graph",
-      "graph": "tropoause",
+      "graph": "tropopause:::2",
       "fontsize": 80,
-      "title": "Tropoause Dataset",
-      "ax_prefix": "Tropoause"
+      "title": "tropopause Dataset",
+      "ax_prefix": "tropopause"
     },
     "red_sea_tune_m": {
       "type": "tune_m",
       "title": "Red Sea m tuning",
       "graph": "red_sea",
+      "hist": "degree",
+      "dist": "geo",
+      "m_start": 0.80,
+      "num_ms": 20,
+      "fontsize": 40,
+      "figsize": [5, 2]
+    },
+    "wind_tune_m": {
+      "type": "tune_m",
+      "title": "Wind m tuning",
+      "graph": "wind",
+      "hist": "degree",
+      "dist": "geo",
+      "m_start": 0.80,
+      "num_ms": 20,
+      "fontsize": 40
+    },
+    "navier_stokes_tune_m": {
+      "type": "tune_m",
+      "title": "Navier Stokes m tuning",
+      "graph": "navier_stokes",
+      "hist": "degree",
+      "dist": "geo",
+      "m_start": 0.80,
+      "num_ms": 20,
+      "fontsize": 40
+    },
+    "tropopause_tune_m": {
+      "type": "tune_m",
+      "title": "tropopause m tuning",
+      "graph": "tropopause:::2",
+      "hist": "degree",
+      "dist": "geo",
+      "m_start": 0.80,
+      "num_ms": 20,
+      "fontsize": 40
+    },
+    "tangaroa_tune_m": {
+      "type": "tune_m",
+      "title": "Tangaroa m tuning",
+      "graph": "tangaroa:::10",
       "hist": "degree",
       "dist": "geo",
       "m_start": 0.80,

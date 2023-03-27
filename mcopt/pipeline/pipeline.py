@@ -351,7 +351,14 @@ class Pipeline:
     if ':' in name:
       parts = name.split(':', maxsplit=1)
       name = parts[0]
-      i = int(parts[1])
+      idx = parts[1]
+      
+      if ':' in idx:
+        idxs = [None if part == '' else int(part) for part in idx.split(':')]
+        
+        i = slice(*idxs)
+      else:
+        i = int(idx)
     
     self._load_graph(name)
     assert name in self._graphs
@@ -359,7 +366,12 @@ class Pipeline:
     if i is None:
       return self._graphs[name]
     else:
-      return Graph(f'{name}:{i}', [self._graphs[name].frames[i]])
+      frames = self._graphs[name].frames[i]
+      
+      if not type(frames) is list:
+        frames = [frames]
+      
+      return Graph(f'{name}', frames)
   
   def generate_all(self):
     self.generate_datasets()

@@ -43,6 +43,8 @@ def tune_m(
   num_ms: int = 5,
   title=None,
   fontsize=40,
+  figsize=None,
+  detailed=True,
   **_rest,
 ):
   if not hist:
@@ -79,6 +81,9 @@ def tune_m(
         i = coupling.dest_rev_map[dest_n]
         src_i = coupling[:, i].argmax()
         
+        if np.isclose(coupling[src_i, i], 0):
+          pass
+        
         src_n = coupling.src_map[src_i]
         dest_pos = dest_graph.nodes(data='pos2')[dest_n]
         src_pos = src_graph.nodes(data='pos2')[src_n]
@@ -96,7 +101,8 @@ def tune_m(
   y = results.max(axis=1)
   
   ax_summary.plot(x, y)
-  ax_summary.set_xticks(np.round(ms, decimals=2), rotate=45, ha='right')
+  ax_summary.set_xticks(np.round(ms, decimals=2))
+  ax_summary.tick_params(axis='x', labelrotation=45, labelright=True)
 
   ax_summary.set_xlabel('m')
   ax_summary.set_ylabel('Max match distance')
@@ -106,7 +112,13 @@ def tune_m(
     
   fig_summary.savefig(os.path.join(out, 'summary.png'), bbox_inches='tight')
   
-  w, h = util.layout_like_square(len(dest_graphs))
+  if not detailed:
+    return
+  
+  if figsize is None:
+    w, h = util.layout_like_square(len(dest_graphs))
+  else:
+    w, h = figsize
   
   assert (w * h >= len(dest_graphs))
   fig, axes = plt.subplots(h, w, figsize=(w * 12, h * 12))
@@ -116,10 +128,15 @@ def tune_m(
     y = results[:, dest_i]
     
     ax.plot(x, y)
-    ax.set_xticks(np.round(ms, decimals=2), rotate=45, ha='right')
+    ax.set_xticks(np.round(ms, decimals=2))
+    ax.tick_params(axis='x', labelrotation=45, labelright=True)
     ax.set_xlabel('m')
     ax.set_ylabel('Max match distance')
-    ax.set_title(f'{graph.name} {dest_i + 2}')
+    ax.set_title(f'{graph.name} {dest_i + 2}', fontsize=fontsize//2)
+    
+  if len(dest_graph) > len(axes.ravel()):
+    for ax in axes.ravel()[len(dest_graphs):]:
+      ax.set_axis_off()
     
   if title:
     fig.suptitle(title, fontsize=fontsize)
