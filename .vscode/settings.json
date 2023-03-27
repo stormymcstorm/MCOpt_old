@@ -5,7 +5,8 @@
     "Navier",
     "navierstokes",
     "separatrices",
-    "tangaroa"
+    "tangaroa",
+    "Tropoause"
   ],
   "editor.formatOnSave": false,
   "editor.defaultFormatter": "ms-python.python"

@@ -4,7 +4,9 @@ import json
 
 from mcopt.pipeline.pipeline import Pipeline
 
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(
+  formatter_class=argparse.ArgumentDefaultsHelpFormatter
+)
 
 parser.add_argument(
   "--config", 
@@ -22,11 +24,26 @@ parser.add_argument(
   action='store_false'
 )
 
+parser.add_argument(
+  '--run',
+  dest='run',
+  help='the experiment to run',
+)
+
+
 def main():
   args = parser.parse_args()
   
   config_path = args.config
   
   pipeline = Pipeline(config_path, use_cache=args.use_cache)
-  pipeline.load_all()
+  
+  if args.run is None:
+    pipeline.generate_all()
+    return
+  
+  target = args.run
+  
+  pipeline.run(target)
+  
   

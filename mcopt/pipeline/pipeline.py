@@ -16,7 +16,9 @@ import numpy as np
 
 from mcopt.pipeline.util import file_ext, sort_files
 from mcopt.pipeline.dataset import Dataset
+from mcopt.pipeline.graph import Graph
 from mcopt.pipeline.complex import Complex, MorseComplex
+import mcopt.pipeline.experiments as experiments
 import mcopt.pipeline.vtk as vtk_util
 import mcopt.pipeline.gen as gen_util
 
@@ -43,6 +45,7 @@ class Pipeline:
     
     self._datasets = {}
     self._complexes = {}
+    self._graphs = {}
     
     self._use_cache = use_cache
     
@@ -59,6 +62,9 @@ class Pipeline:
     
     self._download_cache_path = os.path.join(self._cache_path, 'downloads')
     os.makedirs(self._download_cache_path, exist_ok=True)
+    
+    self._results_path = os.path.join(self._cache_path, 'results')
+    os.makedirs(self._results_path, exist_ok=True)
       
   def _read_dataset(self, dir, name):
     frame_files = glob(os.path.join(dir, f'{name}*'))
@@ -264,11 +270,10 @@ class Pipeline:
     conf = self._config['complexes'][name]
     out = os.path.join(self._complex_cache_path, name)
     
-    print(f'> Loading {name} complex')
-    
     cached_conf_file_path = os.path.join(out, 'gen_config.json')
 
     if self._use_cache and not conf_changed(cached_conf_file_path, conf):
+      print(f'> Loading {name} complex')
       print(f'  config unchanged, reading complex')
       
       complex = self._read_complex(out, name)
@@ -276,6 +281,8 @@ class Pipeline:
       return
     
     dataset = self.dataset(conf['dataset']) 
+    
+    print(f'> Loading {name} complex')
     persistence_threshold = conf['persistence_threshold']
     field_name = conf['field_name'] if 'field_name' in conf else None
     
@@ -296,28 +303,110 @@ class Pipeline:
     json.dump(conf, conf_file)
     
     self._complexes[name] = complex
+
+  def _load_graph(self, name):
+    if name in self._graphs:
+      return
+    
+    if name not in self._config['graphs']:
+      raise ValueError(f'Unrecognized graph {name}')
+    
+    conf = self._config['graphs'][name]
+    
+    complex = self.complex(conf['complex'])
+    
+    print(f'> Loading {name} graph')
+    
+    sample_rate = conf['sample_rate'] if 'sample_rate' in conf else None
+    sample_mode = conf['sample_mode'] if 'sample_mode' in conf else 'step'
+    
+    frames = []
+    
+    for frame in tqdm(complex.frames, desc='Constructing graphs', leave=False):
+      morse_graph = frame.to_graph()
       
-  def dataset(self, name) -> Dataset:
+      if sample_rate:
+        morse_graph = morse_graph.sample(sample_rate, mode=sample_mode)
+      
+      frames.append(morse_graph)
+      
+    graph = Graph(name, frames)
+    self._graphs[name] = graph
+  
+  def dataset(self, name: str) -> Dataset:
     self._load_dataset(name)
     assert name in self._datasets
     
     return self._datasets[name]
   
-  def complex(self, name) -> Complex:
+  def complex(self, name: str) -> Complex:
     self._load_complex(name)
     assert name in self._complexes
     
     return self._complexes[name]
+  
+  def graph(self, name: str) -> Graph:
+    i = None
     
-  def load_all(self):
-    self.load_datasets()
-    self.load_complexes()
+    if ':' in name:
+      parts = name.split(':', maxsplit=1)
+      name = parts[0]
+      i = int(parts[1])
+    
+    self._load_graph(name)
+    assert name in self._graphs
+    
+    if i is None:
+      return self._graphs[name]
+    else:
+      return Graph(f'{name}:{i}', [self._graphs[name].frames[i]])
+  
+  def generate_all(self):
+    self.generate_datasets()
+    self.generate_complexes()
       
-  def load_datasets(self):
+  def generate_datasets(self):
     for name in self._config['datasets'].keys():
       self._load_dataset(name)
       
-  def load_complexes(self):
+  def generate_complexes(self):
     for name in self._config['complexes'].keys():
       self._load_complex(name)
+  
+  def run(self, target):
+    if target not in self._config['experiments']:
+      raise ValueError(f'Unrecognized experiment {target}')
+    
+    conf = self._config['experiments'][target]
+    
+    ty = conf['type']
+    
+    if ty == 'draw_graph':
+      graph = self.graph(conf['graph'])
       
+      print(f'> Running experiment {target}')
+      
+      out = os.path.join(self._results_path, target + '.png')
+      
+      args = dict(conf)
+      args.pop('graph')
+      
+      experiments.draw_graph(graph, out, **args)
+      
+      print(f'  results written to {out}')
+    elif ty == 'tune_m':
+      graph = self.graph(conf['graph'])
+      
+      print(f'> Running experiment {target}')
+      
+      out = os.path.join(self._results_path, target)
+      os.makedirs(out, exist_ok=True)
+      
+      args = dict(conf)
+      args.pop('graph')
+      
+      experiments.tune_m(graph, out, **args)
+      
+      print(f'  results written to {out}')
+    else:
+      raise ValueError(f'Unrecognized experiment type {ty}')

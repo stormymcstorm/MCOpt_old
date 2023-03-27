@@ -125,5 +125,64 @@
       "persistence_threshold": 0.1,
       "field_name": "velocityMagnitude"
     }
+  },
+  "graphs": {
+    "red_sea": {
+      "complex": "red_sea",
+      "sample_rate": 5
+    },
+    "wind": {
+      "complex": "wind",
+      "sample_rate": 5
+    },
+    "navier_stokes": {
+      "complex": "navier_stokes",
+      "sample_rate": 5
+    },
+    "tropoause": {
+      "complex": "tropoause",
+      "sample_rate": 10,
+      "sample_mode": "geo"
+    }
+  },
+  "experiments": {
+    "red_sea_graphs": {
+      "type": "draw_graph",
+      "graph": "red_sea",
+      "fontsize": 80,
+      "title": "Red Sea Dataset",
+      "ax_prefix": "Red Sea"
+    },
+    "wind_graphs": {
+      "type": "draw_graph",
+      "graph": "wind",
+      "fontsize": 80,
+      "title": "Wind Dataset",
+      "ax_prefix": "Wind"
+    },
+    "navier_stokes_graphs": {
+      "type": "draw_graph",
+      "graph": "navier_stokes",
+      "fontsize": 40,
+      "title": "Navier Stokes Dataset",
+      "ax_prefix": "Navier Stokes"
+    },
+    "tropoause_graphs": {
+      "type": "draw_graph",
+      "graph": "tropoause",
+      "fontsize": 80,
+      "title": "Tropoause Dataset",
+      "ax_prefix": "Tropoause"
+    },
+    "red_sea_tune_m": {
+      "type": "tune_m",
+      "title": "Red Sea m tuning",
+      "graph": "red_sea",
+      "hist": "degree",
+      "dist": "geo",
+      "m_start": 0.80,
+      "num_ms": 20,
+      "fontsize": 40
+    }
   }
 }
