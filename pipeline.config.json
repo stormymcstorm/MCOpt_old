@@ -143,6 +143,10 @@
       "complex": "tropoause",
       "sample_rate": 10,
       "sample_mode": "geo"
+    },
+    "tangaroa": {
+      "complex": "tangaroa",
+      "sample_rate": 10
     }
   },
   "experiments": {
