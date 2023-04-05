@@ -185,6 +185,9 @@ class MorseGraph(nx.Graph):
     else:
       raise ValueError(f'Unrecognized distance type {dist}')
     
+    # Normalize metric
+    metric /= metric.max()
+    
     return MetricProbabilityNetwork(X, measure, metric)
   
   @staticmethod
@@ -365,6 +368,9 @@ class MorseHypergraph(hnx.Hypergraph):
         metric[i,:] = shortest_target_dists
     else:
       raise ValueError(f'Unrecognized distance type {dist}')
+    
+    # normalize metric
+    metric /= metric.max()
     
     return MetricProbabilityHypernetwork(
       node_space,

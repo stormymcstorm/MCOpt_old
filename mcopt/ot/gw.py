@@ -5,7 +5,6 @@ Implementation of GW optimal transport
 from typing import Optional, Tuple
 
 import numpy as np
-import torch
 from scipy import stats
 from scipy.sparse import random
 from ot.optim import emd
