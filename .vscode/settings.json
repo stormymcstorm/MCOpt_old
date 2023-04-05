@@ -1,9 +1,12 @@
 {
   "cSpell.words": [
     "Hypernetwork",
+    "jaccard",
     "Navier",
     "navierstokes",
-    "separatrices"
+    "separatrices",
+    "tangaroa",
+    "Tropoause"
   ],
   "editor.formatOnSave": false,
   "editor.defaultFormatter": "ms-python.python"

@@ -1,0 +1,11 @@
+matplotlib
+networkx
+hypernetx
+numpy
+pandas
+POT
+scikit-image
+scipy
+tqdm
+torch
+ipykernel

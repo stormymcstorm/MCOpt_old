@@ -1,2 +1,1 @@
-from .morse_complex import MorseComplex, MorseSmaleComplex
-from .morse_graph import MorseGraph, MorseHypergraph
+from mcopt.morse_graph import MorseGraph, MorseHypergraph

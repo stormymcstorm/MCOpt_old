@@ -1,0 +1,233 @@
+{
+  "cache": "pipeline_out",
+  "datasets": {
+    "sinusoidal": {
+      "type": "gen",
+      "shape": [100, 100],
+      "layers": [
+        {
+          "type": "sinusoidal",
+          "weight": 0.5,
+          "args": {"npeaks": 3}
+        },
+        {
+          "type": "distance",
+          "weight": -0.5
+        },
+        {
+          "type": "noise",
+          "args": {"random_state": 42, "scale": 0.1}
+        }
+      ],
+      "filters": [
+        {"type": "warp", "args": {"scale_factor": 50}}
+      ]
+    },
+    "sinusoidal_noisy": {
+      "type": "gen",
+      "shape": [100, 100],
+      "layers": [
+        {
+          "type": "sinusoidal",
+          "weight": 0.5,
+          "args": {"npeaks": 3}
+        },
+        {
+          "type": "distance",
+          "weight": -0.5
+        },
+        {
+          "type": "noise",
+          "args": {"random_state": 42, "scale": 0.25}
+        }
+      ],
+      "filters": [
+        {"type": "warp", "args": {"scale_factor": 50}}
+      ]
+    },
+    "tropopause": {
+      "type": "load",
+      "src": "https://www.dropbox.com/s/tscfc32bskuotiu/tropoause-VISContest.zip?dl=1",
+      "frames": "Tropoause-VISContest_*.vtk"
+    },
+    "heated_cylinder": {
+      "type": "load",
+      "src": "https://www.dropbox.com/s/p8dxv8vlwtaxdgk/heatedcylinder-800-899.zip?dl=1",
+      "frames": "data_*.vtp"
+    },
+    "wind": {
+      "type": "load",
+      "src": "data/wind.zip",
+      "frames": "wind*.vti"
+    },
+    "red_sea": {
+      "type": "load",
+      "src": "data/redSea.zip",
+      "frames": "redSeaVelocity*.vti"
+    },
+    "navier_stokes": {
+      "type": "load",
+      "src": "data/Navier-Stokes.zip",
+      "frames": "speed*.vti"
+    },
+    "tangaroa": {
+      "type": "load",
+      "src": "data/tangaroa-dataset-50-200.zip",
+      "frames": "data_*.vti",
+      "filters": [
+        {
+          "type": "box_clip", 
+          "args": {
+            "xmin": -0.25,
+            "xmax": 0.75,
+            "ymin": -0.3,
+            "ymax": 0.3,
+            "zmin": -0.5,
+            "zmax": -0.49
+          }
+        }
+      ]
+    }
+  },
+  "complexes": {
+    "sinusoidal": {
+      "dataset": "sinusoidal",
+      "persistence_threshold": 0.1
+    },
+    "sinusoidal_noisy": {
+      "dataset": "sinusoidal_noisy",
+      "persistence_threshold": 0.1
+    },
+    "tropopause": {
+      "dataset": "tropopause",
+      "persistence_threshold": 2.5,
+      "field_name": "trop_1"
+    },
+    "heated_cylinder": {
+      "dataset": "heated_cylinder",
+      "persistence_threshold": 0.05,
+      "field_name": "velocityMagnitude"
+    },
+    "wind": {
+      "dataset": "wind",
+      "persistence_threshold": 2.5
+    },
+    "red_sea": {
+      "dataset": "red_sea",
+      "persistence_threshold": 0.01
+    },
+    "navier_stokes": {
+      "dataset": "navier_stokes",
+      "persistence_threshold": 0.1
+    },
+    "tangaroa": {
+      "dataset": "tangaroa",
+      "persistence_threshold": 0.1,
+      "field_name": "velocityMagnitude"
+    }
+  },
+  "graphs": {
+    "red_sea": {
+      "complex": "red_sea",
+      "sample_rate": 5
+    },
+    "wind": {
+      "complex": "wind",
+      "sample_rate": 5
+    },
+    "navier_stokes": {
+      "complex": "navier_stokes",
+      "sample_rate": 5
+    },
+    "tropopause": {
+      "complex": "tropopause",
+      "sample_rate": 10,
+      "sample_mode": "geo"
+    },
+    "tangaroa": {
+      "complex": "tangaroa",
+      "sample_rate": 10
+    }
+  },
+  "experiments": {
+    "red_sea_graphs": {
+      "type": "draw_graph",
+      "graph": "red_sea",
+      "fontsize": 80,
+      "title": "Red Sea Dataset",
+      "ax_prefix": "Red Sea"
+    },
+    "wind_graphs": {
+      "type": "draw_graph",
+      "graph": "wind",
+      "fontsize": 80,
+      "title": "Wind Dataset",
+      "ax_prefix": "Wind"
+    },
+    "navier_stokes_graphs": {
+      "type": "draw_graph",
+      "graph": "navier_stokes",
+      "fontsize": 40,
+      "title": "Navier Stokes Dataset",
+      "ax_prefix": "Navier Stokes"
+    },
+    "tropopause_graphs": {
+      "type": "draw_graph",
+      "graph": "tropopause:::2",
+      "fontsize": 80,
+      "title": "tropopause Dataset",
+      "ax_prefix": "tropopause"
+    },
+    "red_sea_tune_m": {
+      "type": "tune_m",
+      "title": "Red Sea m tuning",
+      "graph": "red_sea",
+      "hist": "degree",
+      "dist": "geo",
+      "m_start": 0.80,
+      "num_ms": 20,
+      "fontsize": 40,
+      "figsize": [5, 2]
+    },
+    "wind_tune_m": {
+      "type": "tune_m",
+      "title": "Wind m tuning",
+      "graph": "wind",
+      "hist": "degree",
+      "dist": "geo",
+      "m_start": 0.80,
+      "num_ms": 20,
+      "fontsize": 40
+    },
+    "navier_stokes_tune_m": {
+      "type": "tune_m",
+      "title": "Navier Stokes m tuning",
+      "graph": "navier_stokes",
+      "hist": "degree",
+      "dist": "geo",
+      "m_start": 0.80,
+      "num_ms": 20,
+      "fontsize": 40
+    },
+    "tropopause_tune_m": {
+      "type": "tune_m",
+      "title": "tropopause m tuning",
+      "graph": "tropopause:::2",
+      "hist": "degree",
+      "dist": "geo",
+      "m_start": 0.80,
+      "num_ms": 20,
+      "fontsize": 40
+    },
+    "tangaroa_tune_m": {
+      "type": "tune_m",
+      "title": "Tangaroa m tuning",
+      "graph": "tangaroa:::10",
+      "hist": "degree",
+      "dist": "geo",
+      "m_start": 0.80,
+      "num_ms": 20,
+      "fontsize": 40
+    }
+  }
+}

@@ -1,6 +1,4 @@
-gen_complexes
-gen_complexes.zip
-gen_figures
+pipeline_out
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

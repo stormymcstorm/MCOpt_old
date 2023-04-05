@@ -8,7 +8,8 @@
   "customizations": {
     "vscode": {
       "extensions": [
-        "ms-python.python"
+        "ms-python.python",
+        "bungcip.better-toml"
       ],
       "settings": {
         "python.defaultInterpreterPath": "/home/vscode/.venv/bin/python"
