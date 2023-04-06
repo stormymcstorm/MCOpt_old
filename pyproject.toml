@@ -16,7 +16,8 @@ dependencies = [
   "matplotlib",
   "tqdm",
   "networkx",
-  "hypernetx"
+  "hypernetx",
+  "torch"
 ]
 
 [project.scripts]

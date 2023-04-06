@@ -35,4 +35,4 @@ def main():
     show_progress=True,
   )
   
-  pipeline.generate_all()
+  pipeline.generate_graphs()

@@ -30,6 +30,7 @@ from urllib.parse import urlparse
 
 import numpy as np
 import networkx as nx
+from matplotlib.figure import Figure as Fig
 from tqdm.autonotebook import tqdm
 from vtkmodules.vtkCommonExecutionModel import vtkAlgorithm
 
@@ -122,16 +123,7 @@ class Pipeline:
           graphs_cache
         )
 
-  def generate_all(self):
-    for target in self._downloads.values():
-      target.get()
-    
-    for target in self._datasets.values():
-      target.get()
-      
-    for target in self._complexes.values():
-      target.get()
-      
+  def generate_graphs(self):
     for target in self._graphs.values():
       target.get()
   
@@ -259,6 +251,9 @@ class Complex(Entity[MorseComplex]):
 class Graph(Entity[MorseGraph]):
   pass
 
+class Figure(Entity[Fig]):
+  pass
+
 TargetEntity = TypeVar('TargetEntity', bound=Entity)
 TargetConf = TypeVar('TargetConf', bound=TypedDict)
 
@@ -331,9 +326,8 @@ class Target(ABC, Generic[TargetConf, TargetEntity]):
     if self._entity is not None:
       return self._entity
     
-    self.pipeline.log(f'> Generating {self.name} {self.target_name}')
-    
     if not self._config_changed():
+      self.pipeline.log(f'> Generating {self.name} {self.target_name}')
       self.pipeline.log(f'  config unchanged, loading {self.target_name}')
       self._entity = self._load()
       self.pipeline.log(f'  loaded {len(self._entity.frames)} frames')
@@ -341,6 +335,8 @@ class Target(ABC, Generic[TargetConf, TargetEntity]):
       return self._entity
     
     self._entity = self._make()
+    
+    self.pipeline.log(f'> Generating {self.name} {self.target_name}')
     
     self.pipeline.log(f'  generated {len(self._entity.frames)} frames')
     
@@ -789,7 +785,7 @@ class GraphTarget(Target[GraphConf, Graph]):
           
           nodes[n] = node_data
           
-        graph.add_nodes_from(nodes)
+        graph.add_nodes_from(nodes.items())
         
         frames[i] = graph
       
@@ -825,4 +821,31 @@ class GraphTarget(Target[GraphConf, Graph]):
       frames[i] = frame.to_graph().sample(sample_rate, sample_mode)
       
     return Graph(self.name, frames) 
-      
+
+class FigureGraphsConf(TypedDict):
+  type: Literal['graphs']
+  title: str
+  
+FigureConf = FigureGraphsConf
+  
+class FigureTarget(Target[FigureConf, Figure]):
+  @staticmethod
+  def _validate_graphs_conf(name: str, conf: Dict) -> FigureGraphsConf:
+    
+    if 'title' not in conf:
+      conf['title'] = f'{name} Graphs'
+    
+    return cast(FigureGraphsConf, conf)
+  
+  @staticmethod
+  def _validate_config(name: str, conf: Dict) -> FigureConf:
+    target = f'Figure {name}'
+    
+    if 'type' not in conf:
+      raise ValueError(f'{target}: type field required')
+    
+    ty = conf['type']
+    if ty == 'graphs':
+      return FigureTarget._validate_graphs_conf(name, conf)
+    else:
+      raise ValueError(f'{target}: unrecognized type {ty}')

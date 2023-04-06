@@ -8,6 +8,7 @@ import numpy as np
 from scipy import stats
 from scipy.sparse import random
 from ot.optim import emd
+import torch
 
 from mcopt.mm_space import (
   MetricProbabilityNetwork, 
@@ -195,6 +196,47 @@ def _ugw_log_sinkhorn(lcost, f, g, a, b, mass, eps, rho, rho2, nits_sinkhorn, to
     + b.log()[None, :]
   )
   return f, g, logpi
+
+def _ugw_l2_distortion(pi, gamma, dx, dy):
+  distxx = torch.einsum(
+    "jk,j,k", dx ** 2, pi.sum(dim=1), gamma.sum(dim=1)
+  )
+  distyy = torch.einsum(
+    "jk,j,k", dy ** 2, pi.sum(dim=0), gamma.sum(dim=0)
+  )
+  distxy = torch.sum(
+    torch.einsum("ij,jl->il", dx, pi)
+    * torch.einsum("ij,jl->il", gamma, dy)
+  )
+  distortion = distxx + distyy - 2 * distxy
+  return distortion
+
+def _ugw_quad_kl_div(pi, gamma, ref):
+  massp, massg = pi.sum(), gamma.sum()
+  div = (
+    massg * torch.sum(pi * (pi / ref + 1e-10).log())
+    + massp
+    * torch.sum(gamma * (gamma / ref + 1e-10).log())
+    - massp * massg
+    + ref.sum() ** 2
+  )
+  return div
+
+def _ugw_cost(pi, gamma, a, dx, b, dy, eps, rho, rho2):
+  cost = _ugw_l2_distortion(
+    pi, gamma, dx, dy
+  ) + eps * _ugw_quad_kl_div(
+    pi, gamma, a[:, None] * b[None, :]
+  )
+  if rho < float("Inf"):
+    cost = cost + rho * _ugw_quad_kl_div(
+      torch.sum(pi, dim=1), torch.sum(gamma, dim=1), a
+    )
+  if rho2 < float("Inf"):
+    cost = cost + rho2 * _ugw_quad_kl_div(
+      torch.sum(pi, dim=0), torch.sum(gamma, dim=0), b
+    )
+  return cost
 
 def GW(
   X: MetricProbabilityNetwork,
@@ -530,7 +572,7 @@ def uGW(
     if (logpi - logpi_prev).abs().max().item() < 1e-6:
       break
   
-  dist = lcost
+  dist = _ugw_cost(logpi.exp(), logpi_prev.exp(), mu, d_X, nu, d_Y, eps, rho, rho2)
   raw_coupling = logpi.exp().numpy()
   
   coupling = Coupling(raw_coupling, X.space, Y.space)
