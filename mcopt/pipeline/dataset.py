@@ -1,16 +1,47 @@
 """
-Utilities for working with datasets
+Dataset target definition
 """
 
-from typing import List
+from typing_extensions import NotRequired
+from typing import (
+  Literal, 
+  Dict, 
+  TypedDict,
+  List,
+  Any,
+  IO,
+  Optional,
+  Callable,
+  cast
+)
 
-import vtk
+from mcopt.pipeline.target import Target
+from mcopt.pipeline.progress import ProgressFactory
+
+class FilterConf(TypedDict):
+  pass
+
+class DatasetLoadConf(TypedDict):
+  type: Literal['load']
+  frames: str
+  src: NotRequired[str]
+  download: NotRequired[str]
+  filters: NotRequired[List[FilterConf]]
+
+class LayerConf(TypedDict):
+  type: str
+  args: Dict[str, Any]
+  weight: float
+
+class DatasetGenConf(TypedDict):
+  type: Literal['gen']
+  layers: List[LayerConf]
+  filters: NotRequired[List[FilterConf]]
+
+DatasetConf = DatasetLoadConf | DatasetGenConf
 
 class Dataset:
-  name: str
-  frames: List[vtk.vtkAlgorithm]
-  
-  def __init__(self, name, frames):
-    self.name = name
-    self.frames = frames
-  
+  pass
+
+class DatasetTarget(Target[DatasetConf, Dataset]):
+  pass

@@ -1,6 +1,8 @@
-import os
+"""
+Main method for mcpipeline
+"""
+
 import argparse
-import json
 
 from mcopt.pipeline.pipeline import Pipeline
 
@@ -24,26 +26,13 @@ parser.add_argument(
   action='store_false'
 )
 
-parser.add_argument(
-  '--run',
-  dest='run',
-  help='the experiment to run',
-)
-
-
 def main():
   args = parser.parse_args()
   
-  config_path = args.config
+  pipeline = Pipeline(
+    args.config,
+    use_cache=args.use_cache,
+    show_progress=True,
+  )
   
-  pipeline = Pipeline(config_path, use_cache=args.use_cache)
-  
-  if args.run is None:
-    pipeline.generate_all()
-    return
-  
-  target = args.run
-  
-  pipeline.run(target)
-  
-  
+  pipeline.generate_all()
