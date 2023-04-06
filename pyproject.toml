@@ -11,7 +11,6 @@ authors = [
 readme = "README.md"
 dependencies = [
   "numpy",
-  "torch",
   "pandas",
   "scikit-image",
   "matplotlib",

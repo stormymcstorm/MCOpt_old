@@ -47,8 +47,10 @@ class MorseGraph(nx.Graph):
         
         if mode == 'step':
           new_length = length + 1
-        if mode == 'geo':
+        elif mode == 'geo':
           new_length = length + np.linalg.norm(self.nodes(data='pos2')[n] - self.nodes(data='pos2')[node])
+        else:
+          raise ValueError(f'Unrecognized mode {mode}')
           
         if new_length > rate:
           graph.add_node(n, **self.nodes(data=True)[n])
