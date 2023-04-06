@@ -9,6 +9,8 @@ from scipy import stats
 from scipy.sparse import random
 from ot.optim import emd
 import torch
+import unbalancedgw
+from unbalancedgw._vanilla_utils import ugw_cost
 
 from mcopt.mm_space import (
   MetricProbabilityNetwork, 
@@ -509,7 +511,7 @@ def uGW(
   eps: float = 1,
   random_G0: bool = False,
   random_state = None,
-  numItermax: int = 200,
+  numItermax: int = 500,
 ):
   if rho2 is None:
     rho2 = rho
@@ -523,59 +525,24 @@ def uGW(
   if random_G0:
     assert G0 is None
     G0 = make_random_G0(mu, nu, random_state=random_state)
-  elif G0 is None:
-    G0 = np.outer(mu, nu)
     
   d_X = torch.from_numpy(d_X)
   d_Y = torch.from_numpy(d_Y)
   mu = torch.from_numpy(mu)
   nu = torch.from_numpy(nu)
-  G0 = torch.from_numpy(G0)
   
-  logpi = (G0 + 1e-30).log()
-  logpi_prev = torch.zeros_like(logpi)
-  lcost = float('inf')
+  if G0 is not None:
+    G0 = torch.from_numpy(G0)
   
-  up, vp = None, None
-  for _ in range(numItermax):
-    logpi_prev = logpi.clone()
-    
-    lcost = _ugw_compute_local_cost(
-      logpi.exp(),
-      mu,
-      d_X,
-      nu,
-      d_Y,
-      eps,
-      rho,
-      rho2
-    )
-    
-    logmp = logpi.logsumexp(dim=(0,1))
-    
-    up, vp, logpi = _ugw_log_sinkhorn(
-      lcost, up, vp, mu, nu, logmp.exp() + 1e-10, eps, rho, rho2,
-      numItermax, 1e-6
-    )
-    
-    if torch.any(torch.isnan(logpi)):
-      raise Exception(
-        f'Solver got NaN plan with params (eps, rho, rho2) '
-        f' = {eps, rho, rho2}. Try increasing argument eps.'
-      )
-      
-    logpi = (
-      0.5 * (logmp - logpi.logsumexp(dim=(0, 1)))
-      + logpi
-    )
-    
-    if (logpi - logpi_prev).abs().max().item() < 1e-6:
-      break
+  pi, gamma = unbalancedgw.log_ugw_sinkhorn(
+    a=mu, dx=d_X, b=nu, dy=d_Y, init=G0, eps=eps, nits_plan=numItermax,
+    tol_plan=1e-10, tol_sinkhorn=1e-10,
+    two_outputs=True)
   
-  dist = _ugw_cost(logpi.exp(), logpi_prev.exp(), mu, d_X, nu, d_Y, eps, rho, rho2)
-  raw_coupling = logpi.exp().numpy()
+  dist = ugw_cost(pi, gamma, a=mu, dx=d_X, b=nu, dy=d_Y, eps=eps,
+                               rho=rho, rho2=rho2)
   
-  coupling = Coupling(raw_coupling, X.space, Y.space)
+  coupling = Coupling(pi, X.space, Y.space)
   
   return coupling, dist
   
