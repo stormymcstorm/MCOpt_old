@@ -35,7 +35,7 @@ class DownloadTarget(Target[DownloadConf, Download]):
   @staticmethod
   def _validate_conf(name: str, conf: Dict) -> DownloadConf:
     if 'url' not in conf:
-      raise ValueError(f'Download target ')
+      raise ValueError(f'Download target {name} must have url')
     
     url = conf['url']
 
