@@ -530,13 +530,13 @@ def uGW(
   d_Y = torch.from_numpy(d_Y)
   mu = torch.from_numpy(mu)
   nu = torch.from_numpy(nu)
-  
+    
   if G0 is not None:
     G0 = torch.from_numpy(G0)
-  
+    
   pi, gamma = unbalancedgw.log_ugw_sinkhorn(
     a=mu, dx=d_X, b=nu, dy=d_Y, init=G0, eps=eps, nits_plan=numItermax,
-    tol_plan=1e-10, tol_sinkhorn=1e-10,
+    tol_plan=1e-7, tol_sinkhorn=1e-5,
     two_outputs=True)
   
   dist = ugw_cost(pi, gamma, a=mu, dx=d_X, b=nu, dy=d_Y, eps=eps,

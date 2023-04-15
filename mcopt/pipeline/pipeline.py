@@ -27,10 +27,12 @@ import tempfile
 from glob import glob
 from urllib.request import urlretrieve
 from urllib.parse import urlparse
+from copy import copy
 
 import numpy as np
 import networkx as nx
 from matplotlib.figure import Figure as Fig
+import matplotlib.pyplot as plt
 from tqdm.autonotebook import tqdm
 from vtkmodules.vtkCommonExecutionModel import vtkAlgorithm
 
@@ -39,6 +41,23 @@ from mcopt.pipeline.complex import MorseComplex
 import mcopt.pipeline.util.vtk as vtk_util
 import mcopt.pipeline.util.gen as gen_util
 from mcopt import MorseGraph
+
+def parse_name(name: str) -> Tuple[str, Optional[slice]]:
+  if ':' in name:
+    parts = name.split(':', maxsplit=1)
+    name = parts[0]
+    i = parts[1]
+    
+    if ':' in i:
+      idxs = [None if part == '' else int(part) for part in i.split(':')]
+      
+      return name, slice(*idxs)
+    else:
+      i = int(i)
+      
+      return name, slice(i, i+1)
+  
+  return name, None
 
 class Pipeline:
   """
@@ -122,34 +141,73 @@ class Pipeline:
           self,
           graphs_cache
         )
+        
+    self._figures = {}
+    if 'figures' in config:
+      for name, conf in config['figures'].items():
+        figures_cache = os.path.join(root, cache, 'figures', name) if use_cache else None
+        
+        self._figures[name] = FigureTarget(
+          name,
+          conf,
+          self,
+          figures_cache
+        )
 
-  def generate_graphs(self):
+  def generate_all(self):
+    for target in self._datasets.values():
+      target.get()
+      
+    for target in self._complexes.values():
+      target.get()
+    
     for target in self._graphs.values():
+      target.get()
+      
+    for target in self._figures.values():
       target.get()
   
   def download(self, name: str, idxs: Optional[slice] = None) -> Download:
+    if idxs is None:
+      name, idxs = parse_name(name)
+    
     if name not in self._downloads:
       raise ValueError(f'Unrecognized download {name}')
     
     return self._downloads[name].get(idxs)
   
   def dataset(self, name: str, idxs: Optional[slice] = None) -> Dataset:
+    if idxs is None:
+      name, idxs = parse_name(name)
+    
     if name not in self._datasets:
       raise ValueError(f'Unrecognized dataset {name}')
     
     return self._datasets[name].get(idxs)
   
   def complex(self, name: str, idxs: Optional[slice] = None) -> Complex:
+    if idxs is None:
+      name, idxs = parse_name(name)
+    
     if name not in self._complexes:
       raise ValueError(f'Unrecognized complex {name}')
     
     return self._complexes[name].get(idxs)
   
   def graph(self, name: str, idxs: Optional[slice] = None) -> Graph:
+    if idxs is None:
+      name, idxs = parse_name(name)
+    
     if name not in self._graphs:
       raise ValueError(f'Unrecognized graph {name}')
     
     return self._graphs[name].get(idxs)
+  
+  def figure(self, name: str) -> Figure:
+    if name not in self._figures:
+      raise ValueError(f'Unrecognized figure {name}')
+    
+    return self._figures[name].get()
   
   def _urlretrieve(self, url: str, out: str, desc=''):
     with self.progress(
@@ -163,6 +221,14 @@ class Pipeline:
   def log(self, msg):
     if not self._silent:
       print(msg)
+      
+  def targets(self) -> Dict[str, str]:
+    return {
+      'downloads': self._downloads.keys(),
+      'datasets': self._datasets.keys(),
+      'complexes': self._complexes.keys(),
+      'graphs': self._graphs.keys(),
+    }    
       
 class ProgressFactory:
   show: bool
@@ -264,6 +330,7 @@ class Target(ABC, Generic[TargetConf, TargetEntity]):
   pipeline: Pipeline
   cache_path: Optional[str]
   conf: TargetConf
+  loadable: bool
   
   _entity: Optional[TargetEntity]
   
@@ -278,11 +345,13 @@ class Target(ABC, Generic[TargetConf, TargetEntity]):
     conf: Dict,
     pipeline: Pipeline,
     cache_path: Optional[str],
+    loadable: bool = True,
   ):
     self.name = name
     self.pipeline = pipeline
     self.cache_path = cache_path
     self.conf = self._validate_config(name, conf)
+    self.loadable = loadable
     
     self._entity = None
   
@@ -326,7 +395,9 @@ class Target(ABC, Generic[TargetConf, TargetEntity]):
     if self._entity is not None:
       return self._entity
     
-    if not self._config_changed():
+    conf_changed = self._config_changed()
+    
+    if self.loadable and not conf_changed:
       self.pipeline.log(f'> Generating {self.name} {self.target_name}')
       self.pipeline.log(f'  config unchanged, loading {self.target_name}')
       self._entity = self._load()
@@ -340,7 +411,7 @@ class Target(ABC, Generic[TargetConf, TargetEntity]):
     
     self.pipeline.log(f'  generated {len(self._entity.frames)} frames')
     
-    if self.cache_path is not None:
+    if conf_changed and self.cache_path is not None:
       self.pipeline.log(f'  saving {self.target_name} to {self.cache_path}')
       self._save()
       self._save_config()
@@ -348,15 +419,18 @@ class Target(ABC, Generic[TargetConf, TargetEntity]):
     return self._entity
   
   def get(self, idxs: Optional[slice] = None) -> TargetEntity:
-    entity = self._get()
+    entity = copy(self._get())
     
     if idxs is not None:
       frames = {}
       
-      for i, frame in entity.frames.items()[idxs]:
-        frames[i] = frame
+      keys = list(entity.frames.keys())
+      keys.sort()
       
-      entity = TargetEntity(entity.name, frames)
+      for i in keys[idxs]:
+        frames[i] = entity.frames[i]
+      
+      entity.frames = frames
       
     return entity
 
@@ -455,7 +529,7 @@ class DatasetLoadConf(TypedDict):
 class DatasetGenConf(TypedDict):
   type: Literal['gen']
   shape: Sequence[int]
-  layers: List[DatasetLayersConf]
+  frames: List[List[DatasetLayersConf]]
   filters: List[DatasetFilterConf]
   
 DatasetConf = DatasetLoadConf | DatasetGenConf
@@ -525,11 +599,11 @@ class DatasetTarget(Target[DatasetConf, Dataset]):
     if 'shape' not in conf:
       raise ValueError(f'{target}: gen dataset must have shape field')
     
-    if 'layers' not in conf:
-      raise ValueError(f'{target}: gen dataset must have layers field')
+    # if 'layers' not in conf:
+    #   raise ValueError(f'{target}: gen dataset must have layers field')
     
-    for layer_conf in conf['layers']:
-      DatasetTarget._validate_layers(name, layer_conf)
+    # for layer_conf in conf['layers']:
+    #   DatasetTarget._validate_layers(name, layer_conf)
     
     return cast(DatasetGenConf, conf)
   
@@ -597,17 +671,23 @@ class DatasetTarget(Target[DatasetConf, Dataset]):
     conf = cast(DatasetGenConf, self.conf)
     
     shape = conf['shape'] 
-    data = np.zeros(shape)
     
-    for layer_conf in conf['layers']:
-      args = layer_conf['args']
-      weight = layer_conf['weight']
+    frames = {}
+    
+    for i, frame_layers in enumerate(conf['frames']):
+      data = np.zeros(shape)
       
-      ty = layer_conf['type']
-      
-      data += gen_util.GEN_FUNCTIONS[ty](shape=shape, **args) * weight
+      for layer_conf in frame_layers:
+        args = layer_conf['args'] if 'args' in layer_conf else {}
+        weight = layer_conf['weight'] if 'weight' in layer_conf else 1
+        
+        ty = layer_conf['type']
+        
+        data += gen_util.GEN_FUNCTIONS[ty](shape=shape, **args) * weight
+        
+      frames[i] = vtk_util.PlaneSource(data)
 
-    return {0: vtk_util.PlaneSource(data)}
+    return frames
   
   def _make(self) -> Dataset:
     if self.conf['type'] == 'load':
@@ -649,7 +729,7 @@ class ComplexTarget(Target[ComplexConf, Complex]):
     if 'persistence_threshold' not in conf:
       raise ValueError(f'{target}: persistence_threshold field required')
     
-    if not isinstance(conf['persistence_threshold'], float):
+    if not isinstance(conf['persistence_threshold'], float) and not isinstance(conf['persistence_threshold'], int):
       raise ValueError(f'{target}: persistence_threshold field must be a float')
     
     if 'field_name' not in conf:
@@ -825,15 +905,35 @@ class GraphTarget(Target[GraphConf, Graph]):
 class FigureGraphsConf(TypedDict):
   type: Literal['graphs']
   title: str
+  graph: str
+  figsize: List[int]
+  cmap: str
+  fontsize: int
+  node_size: int
+  plot_title_fmt: str
   
 FigureConf = FigureGraphsConf
   
 class FigureTarget(Target[FigureConf, Figure]):
+  target_name = "figure"
+  
   @staticmethod
   def _validate_graphs_conf(name: str, conf: Dict) -> FigureGraphsConf:
     
     if 'title' not in conf:
       conf['title'] = f'{name} Graphs'
+      
+    if 'cmap' not in conf:
+      conf['cmap'] = 'viridis'
+      
+    if 'fontsize' not in conf:
+      conf['fontsize'] = 40
+      
+    if 'node_size' not in conf:
+      conf['node_size'] = 20
+      
+    if 'plot_title_fmt' not in conf:
+      conf['plot_title_fmt'] = '{name} {i}'
     
     return cast(FigureGraphsConf, conf)
   
@@ -849,3 +949,50 @@ class FigureTarget(Target[FigureConf, Figure]):
       return FigureTarget._validate_graphs_conf(name, conf)
     else:
       raise ValueError(f'{target}: unrecognized type {ty}')
+    
+  def __init__(self, name: str, conf: Dict, pipeline: Pipeline, cache_path: Optional[str]):
+    super().__init__(name, conf, pipeline, cache_path, False)  
+  
+  def _load(self) -> Figure:
+    return Figure(self.name, {})
+  
+  def _save(self):
+    assert(self.cache_path is not None)
+    assert(self._entity is not None)
+    
+    os.makedirs(self.cache_path, exist_ok=True)
+    
+    for i, frame in self.pipeline.progress(self._entity.frames.items(), desc="Saving figures"):
+      frame.savefig(os.path.join(self.cache_path, f'{self._entity.name}{i}'), bbox_inches='tight')
+  
+  def _make_graphs(self) -> Dict[int, Fig]:
+    conf = cast(FigureGraphsConf, self.conf)
+    
+    graphs = self.pipeline.graph(conf['graph'])
+    
+    w, h = conf['figsize']
+    
+    fig, axes = plt.subplots(h, w, figsize=(w * 12, h * 12))
+    
+    for ax in axes.ravel():
+      ax.set_axis_off()
+                  
+    for ax, (i, graph) in zip(axes.ravel(), graphs.frames.items()):
+      graph.draw(
+        ax=ax,
+        cmap=conf['cmap'],
+        node_size=conf['node_size']
+      )
+      ax.set_title(conf['plot_title_fmt'].format(name=graphs.name, i=i), fontsize=conf['fontsize'] // 2)
+      
+    fig.suptitle(conf['title'], fontsize=conf['fontsize'])
+      
+    return {0: fig}
+  
+  def _make(self) -> Figure:
+    if self.conf['type'] == 'graphs':
+      frames = self._make_graphs()
+    else:
+      raise NotImplementedError()
+    
+    return Figure(self.name, frames)

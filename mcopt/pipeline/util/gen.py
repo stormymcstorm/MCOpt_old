@@ -24,6 +24,22 @@ def Distance(shape: Sequence[int]) -> np.ndarray:
   
   return np.fromfunction(height, shape=shape, dtype=float)
 
+def Normal(shape: Sequence[int], center : Sequence[int], sigma = 1) -> np.ndarray:
+  assert(len(shape) == 2)
+  assert(len(center) == 2)
+  
+  if not hasattr(sigma, "__len__"):
+    sigma = [sigma, sigma]
+    
+  assert(len(sigma) == 2)
+  
+  sigma_x, sigma_y = sigma
+  
+  def gauss(x, y):
+    return 1/(2 * np.pi * sigma_x * sigma_y) * np.exp(-(x - center[0])**2 / (2 * sigma_x ** 2) -(y - center[1])**2 / (2 * sigma_y ** 2))
+  
+  return np.fromfunction(gauss, shape=shape)
+
 def GaussianNoise(shape: Sequence[int], random_state: Any = None) -> np.ndarray:
   assert(len(shape) == 2)
   
@@ -42,5 +58,6 @@ def Noise(shape: Sequence[int], scale:float = 1, **kwargs) -> np.ndarray:
 GEN_FUNCTIONS = {
   'sinusoidal': Sinusoidal,
   'distance': Distance,
+  'normal': Normal,
   'noise': Noise
 }
