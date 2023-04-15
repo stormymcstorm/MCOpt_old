@@ -7,5 +7,5 @@ POT
 scikit-image
 scipy
 tqdm
-torch
 ipykernel
+ipywidgets

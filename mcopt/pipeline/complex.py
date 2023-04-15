@@ -5,13 +5,14 @@ Utilities for working with Morse Complexes
 from typing import List, Optional
 from functools import cached_property
 
-import vtk
+from vtkmodules.vtkCommonExecutionModel import vtkAlgorithm, vtkAlgorithmOutput
+from vtkmodules.vtkFiltersCore import vtkPassThrough
 import pandas as pd
 import numpy as np
 import networkx as nx
 
-import mcopt.pipeline.ttk as ttk_util
-import mcopt.pipeline.vtk as vtk_util
+import mcopt.pipeline.util.ttk as ttk_util
+import mcopt.pipeline.util.vtk as vtk_util
 from mcopt.morse_graph import MorseGraph
 
 def _make_point_map(
@@ -61,25 +62,25 @@ def _make_point_map(
   return nodes, point_map, critical_nodes
 
 class MorseSmaleComplex:
-  critical_points: vtk.vtkAlgorithm
-  separatrices: vtk.vtkAlgorithm
-  segmentation: vtk.vtkAlgorithm
+  critical_points: vtkAlgorithm
+  separatrices: vtkAlgorithm
+  segmentation: vtkAlgorithm
   
   @staticmethod
   def create(
-    input: vtk.vtkAlgorithmOutput,
+    input: vtkAlgorithmOutput,
     persistence_threshold: float = 0,
     field_name: Optional[str] = None
   ):
     morse_complex = ttk_util.MorseSmaleComplex(input, persistence_threshold, field_name)
     
-    critical_points = vtk.vtkPassThrough()
+    critical_points = vtkPassThrough()
     critical_points.SetInputConnection(morse_complex.GetOutputPort(0))
     
-    separatrices = vtk.vtkPassThrough()
+    separatrices = vtkPassThrough()
     separatrices.SetInputConnection(morse_complex.GetOutputPort(1))
     
-    segmentation = vtk.vtkPassThrough()
+    segmentation = vtkPassThrough()
     segmentation.SetInputConnection(morse_complex.GetOutputPort(3))
     
     return MorseSmaleComplex(
@@ -90,9 +91,9 @@ class MorseSmaleComplex:
   
   def __init__(
     self,
-    critical_points: vtk.vtkAlgorithm,
-    separatrices: vtk.vtkAlgorithm,
-    segmentation: vtk.vtkAlgorithm
+    critical_points: vtkAlgorithm,
+    separatrices: vtkAlgorithm,
+    segmentation: vtkAlgorithm
   ):
     self.critical_points = critical_points
     self.separatrices = separatrices
@@ -131,26 +132,26 @@ class MorseSmaleComplex:
     return graph
 
 class MorseComplex(MorseSmaleComplex):
-  critical_points: vtk.vtkAlgorithm
-  separatrices: vtk.vtkAlgorithm
-  segmentation: vtk.vtkAlgorithm
+  critical_points: vtkAlgorithm
+  separatrices: vtkAlgorithm
+  segmentation: vtkAlgorithm
   
   @staticmethod
   def create(
-    input: vtk.vtkAlgorithmOutput,
+    input: vtkAlgorithmOutput,
     persistence_threshold: float = 0,
     ascending: bool = True,
     field_name: Optional[str] = None
   ):
     morse_complex = ttk_util.MorseComplex(input, persistence_threshold, ascending, field_name)
     
-    critical_points = vtk.vtkPassThrough()
+    critical_points = vtkPassThrough()
     critical_points.SetInputConnection(morse_complex.GetOutputPort(0))
     
-    separatrices = vtk.vtkPassThrough()
+    separatrices = vtkPassThrough()
     separatrices.SetInputConnection(morse_complex.GetOutputPort(1))
     
-    segmentation = vtk.vtkPassThrough()
+    segmentation = vtkPassThrough()
     segmentation.SetInputConnection(morse_complex.GetOutputPort(3))
     
     return MorseComplex(
@@ -161,20 +162,12 @@ class MorseComplex(MorseSmaleComplex):
   
   def __init__(
     self,
-    critical_points: vtk.vtkAlgorithm,
-    separatrices: vtk.vtkAlgorithm,
-    segmentation: vtk.vtkAlgorithm
+    critical_points: vtkAlgorithm,
+    separatrices: vtkAlgorithm,
+    segmentation: vtkAlgorithm
   ):
     super().__init__(
       critical_points,
       separatrices,
       segmentation
     )
-
-class Complex:
-  name: str
-  frames: List[MorseSmaleComplex]
-  
-  def __init__(self, name, frames):
-    self.name = name
-    self.frames = frames

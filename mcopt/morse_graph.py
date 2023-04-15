@@ -47,8 +47,10 @@ class MorseGraph(nx.Graph):
         
         if mode == 'step':
           new_length = length + 1
-        if mode == 'geo':
+        elif mode == 'geo':
           new_length = length + np.linalg.norm(self.nodes(data='pos2')[n] - self.nodes(data='pos2')[node])
+        else:
+          raise ValueError(f'Unrecognized mode {mode}')
           
         if new_length > rate:
           graph.add_node(n, **self.nodes(data=True)[n])
@@ -88,6 +90,26 @@ class MorseGraph(nx.Graph):
       else:
         src = coupling.src_map[src_i]
         colors[n] = src_node_color[src]
+    
+    return colors
+  
+  def node_color_by_coupling_int(
+    self, 
+    src_node_color: Dict[int, float],
+    coupling: Coupling
+  ) -> Dict[int, float]:
+    colors = {}
+    
+    for n in self.nodes:
+      dest_i = coupling.dest_rev_map[n]
+      
+      colors[n] = 0
+      for src, src_color in src_node_color.items():
+        src_i = coupling.src_rev_map[src]
+        
+        colors[n] += coupling[src_i, dest_i] * src_color
+        
+      colors[n] /= coupling.shape[0]  
     
     return colors
 

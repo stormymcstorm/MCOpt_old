@@ -8,6 +8,9 @@ import numpy as np
 from scipy import stats
 from scipy.sparse import random
 from ot.optim import emd
+import torch
+import unbalancedgw
+from unbalancedgw._vanilla_utils import ugw_cost
 
 from mcopt.mm_space import (
   MetricProbabilityNetwork, 
@@ -195,6 +198,47 @@ def _ugw_log_sinkhorn(lcost, f, g, a, b, mass, eps, rho, rho2, nits_sinkhorn, to
     + b.log()[None, :]
   )
   return f, g, logpi
+
+def _ugw_l2_distortion(pi, gamma, dx, dy):
+  distxx = torch.einsum(
+    "jk,j,k", dx ** 2, pi.sum(dim=1), gamma.sum(dim=1)
+  )
+  distyy = torch.einsum(
+    "jk,j,k", dy ** 2, pi.sum(dim=0), gamma.sum(dim=0)
+  )
+  distxy = torch.sum(
+    torch.einsum("ij,jl->il", dx, pi)
+    * torch.einsum("ij,jl->il", gamma, dy)
+  )
+  distortion = distxx + distyy - 2 * distxy
+  return distortion
+
+def _ugw_quad_kl_div(pi, gamma, ref):
+  massp, massg = pi.sum(), gamma.sum()
+  div = (
+    massg * torch.sum(pi * (pi / ref + 1e-10).log())
+    + massp
+    * torch.sum(gamma * (gamma / ref + 1e-10).log())
+    - massp * massg
+    + ref.sum() ** 2
+  )
+  return div
+
+def _ugw_cost(pi, gamma, a, dx, b, dy, eps, rho, rho2):
+  cost = _ugw_l2_distortion(
+    pi, gamma, dx, dy
+  ) + eps * _ugw_quad_kl_div(
+    pi, gamma, a[:, None] * b[None, :]
+  )
+  if rho < float("Inf"):
+    cost = cost + rho * _ugw_quad_kl_div(
+      torch.sum(pi, dim=1), torch.sum(gamma, dim=1), a
+    )
+  if rho2 < float("Inf"):
+    cost = cost + rho2 * _ugw_quad_kl_div(
+      torch.sum(pi, dim=0), torch.sum(gamma, dim=0), b
+    )
+  return cost
 
 def GW(
   X: MetricProbabilityNetwork,
@@ -467,7 +511,7 @@ def uGW(
   eps: float = 1,
   random_G0: bool = False,
   random_state = None,
-  numItermax: int = 200,
+  numItermax: int = 500,
 ):
   if rho2 is None:
     rho2 = rho
@@ -481,59 +525,24 @@ def uGW(
   if random_G0:
     assert G0 is None
     G0 = make_random_G0(mu, nu, random_state=random_state)
-  elif G0 is None:
-    G0 = np.outer(mu, nu)
     
   d_X = torch.from_numpy(d_X)
   d_Y = torch.from_numpy(d_Y)
   mu = torch.from_numpy(mu)
   nu = torch.from_numpy(nu)
-  G0 = torch.from_numpy(G0)
+    
+  if G0 is not None:
+    G0 = torch.from_numpy(G0)
+    
+  pi, gamma = unbalancedgw.log_ugw_sinkhorn(
+    a=mu, dx=d_X, b=nu, dy=d_Y, init=G0, eps=eps, nits_plan=numItermax,
+    tol_plan=1e-7, tol_sinkhorn=1e-5,
+    two_outputs=True)
   
-  logpi = (G0 + 1e-30).log()
-  logpi_prev = torch.zeros_like(logpi)
-  lcost = float('inf')
+  dist = ugw_cost(pi, gamma, a=mu, dx=d_X, b=nu, dy=d_Y, eps=eps,
+                               rho=rho, rho2=rho2)
   
-  up, vp = None, None
-  for _ in range(numItermax):
-    logpi_prev = logpi.clone()
-    
-    lcost = _ugw_compute_local_cost(
-      logpi.exp(),
-      mu,
-      d_X,
-      nu,
-      d_Y,
-      eps,
-      rho,
-      rho2
-    )
-    
-    logmp = logpi.logsumexp(dim=(0,1))
-    
-    up, vp, logpi = _ugw_log_sinkhorn(
-      lcost, up, vp, mu, nu, logmp.exp() + 1e-10, eps, rho, rho2,
-      numItermax, 1e-6
-    )
-    
-    if torch.any(torch.isnan(logpi)):
-      raise Exception(
-        f'Solver got NaN plan with params (eps, rho, rho2) '
-        f' = {eps, rho, rho2}. Try increasing argument eps.'
-      )
-      
-    logpi = (
-      0.5 * (logmp - logpi.logsumexp(dim=(0, 1)))
-      + logpi
-    )
-    
-    if (logpi - logpi_prev).abs().max().item() < 1e-6:
-      break
-  
-  dist = lcost
-  raw_coupling = logpi.exp().numpy()
-  
-  coupling = Coupling(raw_coupling, X.space, Y.space)
+  coupling = Coupling(pi, X.space, Y.space)
   
   return coupling, dist
   

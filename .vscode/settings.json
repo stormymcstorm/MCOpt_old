@@ -5,9 +5,11 @@
     "Navier",
     "navierstokes",
     "separatrices",
+    "Smale",
     "tangaroa",
     "Tropoause"
   ],
   "editor.formatOnSave": false,
-  "editor.defaultFormatter": "ms-python.python"
+  "editor.defaultFormatter": "ms-python.python",
+  // "python.analysis.typeCheckingMode": "basic"
 }

@@ -1,6 +1,8 @@
-import os
+"""
+Main method for mcpipeline
+"""
+
 import argparse
-import json
 
 from mcopt.pipeline.pipeline import Pipeline
 
@@ -24,26 +26,48 @@ parser.add_argument(
   action='store_false'
 )
 
-parser.add_argument(
-  '--run',
-  dest='run',
-  help='the experiment to run',
-)
+subparsers = parser.add_subparsers(dest='subcommand')
 
+parser_dataset = subparsers.add_parser('dataset')
+parser_dataset.add_argument('name')
+
+parser_complex = subparsers.add_parser('complex')
+parser_complex.add_argument('name')
+
+parser_graph = subparsers.add_parser('graph')
+parser_graph.add_argument('name')
+
+parser_figure = subparsers.add_parser('figure')
+parser_figure.add_argument('name')
+
+parser_targets = subparsers.add_parser('targets')
 
 def main():
   args = parser.parse_args()
   
-  config_path = args.config
+  pipeline = Pipeline(
+    args.config,
+    use_cache=args.use_cache,
+    show_progress=True,
+  )
   
-  pipeline = Pipeline(config_path, use_cache=args.use_cache)
+  subcommand = args.subcommand  
   
-  if args.run is None:
+  if subcommand is None:
     pipeline.generate_all()
-    return
-  
-  target = args.run
-  
-  pipeline.run(target)
-  
-  
+  elif subcommand == 'targets':
+    targets = pipeline.targets()
+    
+    for ty, names in targets.items():
+      print(f'{ty}:')
+      
+      for name in names:
+        print(f'\t{name}')
+  elif subcommand == 'dataset':
+    pipeline.dataset(args.name)
+  elif subcommand == 'complex':
+    pipeline.complex(args.name)
+  elif subcommand == 'graph':
+    pipeline.graph(args.name)
+  elif subcommand == 'figure':
+    pipeline.figure(args.name)
