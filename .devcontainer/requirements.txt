@@ -1,6 +1,5 @@
 matplotlib
 networkx
-hypernetx
 numpy
 pandas
 POT
