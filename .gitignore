@@ -2,6 +2,7 @@ pipeline_out
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
+__pipeline_cache__/
 *.py[cod]
 *$py.class
 
