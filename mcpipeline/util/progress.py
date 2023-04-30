@@ -13,16 +13,21 @@ T = TypeVar("T")
 class ProgressFactory:
   show: bool
   tqdm_kwargs: dict
+  curr: ProgressBar | None
   
   def __init__(self, show: bool, **kwargs):
     self.show = show
     self.tqdm_kwargs = kwargs
+    self.curr = None
     
   def __call__(self, iterable: Iterable[T] | None = None, **kwargs) -> ProgressBar[T]:
     if self.show:
-      return ProgressBar(t = tqdm(iterable = iterable, **self.tqdm_kwargs, **kwargs))
+      self.curr = ProgressBar(t = tqdm(iterable = iterable, **self.tqdm_kwargs, **kwargs))
     else:
-      return ProgressBar(iterable=iterable)
+      self.curr = ProgressBar(iterable=iterable)
+    
+    return self.curr
+    
 
 class ProgressBar(Generic[T]):
   _t: tqdm | None
@@ -62,7 +67,13 @@ class ProgressBar(Generic[T]):
       self._t.total = val
     else:
       self._total = val
-      
+  
+  def write(self, msg: str):
+    if self._t is not None:
+      self._t.write(msg)
+    else:
+      print(msg)    
+  
   def update(self, n: float = 1):
     if self._t is not None:
       self._t.update(n)

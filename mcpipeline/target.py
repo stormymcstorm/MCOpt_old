@@ -70,21 +70,54 @@ class Target(ABC, Generic[Conf, Out]):
     
     self.display_name = name if display_name is None else display_name
     self.desc = '' if desc is None else desc
+    
+    self._changed = False
+  
+  def ensure_built(
+    self,
+    silent = False,
+    show_progress = True,
+    _progress: ProgressFactory | None = None,
+    **kwargs
+  ):
+    if _progress is None:
+      progress = ProgressFactory(
+        show = show_progress,
+        leave = False,
+      )
+    else:
+      progress = _progress
+    
+    logger = Logger(silent, self.target_type(), self.name, progress)
+    
+    if self.changed():
+      self.build(
+        silent=silent,
+        show_progress=show_progress, 
+        _progress=progress, **kwargs
+      )
+    else:
+      logger.outer('config unchanged, skipping')
   
   def build(
     self,
     use_cache: bool = True,
     silent = False,
     show_progress = True,
+    _progress: ProgressFactory | None = None,
   ) -> Out:
     if self._out is not None:
       return self._out
     
-    logger = Logger(silent, self.target_type(), self.name)
-    progress = ProgressFactory(
-      show = show_progress,
-      leave = False,
-    )
+    if _progress is None:
+      progress = ProgressFactory(
+        show = show_progress,
+        leave = False,
+      )
+    else:
+      progress = _progress
+    
+    logger = Logger(silent, self.target_type(), self.name, progress)
     
     logger.outer(f'building')
     
@@ -93,8 +126,9 @@ class Target(ABC, Generic[Conf, Out]):
     inputs = [
       dep.build(
         use_cache = use_cache,
-        silent = silent,
-        show_progress=show_progress
+        silent = True,
+        show_progress=show_progress,
+        _progress = progress
       ) 
       for dep in self.depends
     ]
@@ -115,14 +149,27 @@ f'''
 '''
 
   def changed(self) -> bool:
-    return True
+    self._changed = self._config_changed() or self._changed
+    
+    return self._changed or any([dep.changed() for dep in self.depends])
 
   def _save_config(self):
     conf_path = os.path.join(self.cache_path, 'config.json')
     
     with open(conf_path, 'w') as conf_file:
       json.dump(self.conf, conf_file, cls=self._conf_encoder())
-      
+  
+  def _config_changed(self) -> bool:
+    conf_path = os.path.join(self.cache_path, 'config.json')
+        
+    if os.path.exists(conf_path):
+      with open(conf_path, 'r') as conf_file:
+        contents = json.load(conf_file, object_hook=self._conf_decoder())
+        
+        return contents != self.conf
+    
+    return True
+  
   def _conf_encoder(self) -> type[json.JSONEncoder]:
     return json.JSONEncoder
   
@@ -149,18 +196,26 @@ class CacheableTarget(Target[Conf, CacheableOut]):
       conf = conf, 
       **kwargs
     )
-    
-    self._changed = False
   
-  def build(self, use_cache: bool = True, silent=False, show_progress=True) -> CacheableOut:
+  def build(
+    self, 
+    use_cache: bool = True, 
+    silent=False, 
+    show_progress=True,
+    _progress: ProgressFactory | None = None,
+  ) -> CacheableOut:
     if self._out is not None:
       return self._out
     
-    logger = Logger(silent, self.target_type(), self.name)
-    progress = ProgressFactory(
-      show = show_progress,
-      leave = False,
-    )
+    if _progress is None:
+      progress = ProgressFactory(
+        show = show_progress,
+        leave = False,
+      )
+    else:
+      progress = _progress
+    
+    logger = Logger(silent, self.target_type(), self.name, progress)
     
     if use_cache and not self.changed():
       logger.outer('config unchanged, loading')
@@ -169,24 +224,10 @@ class CacheableTarget(Target[Conf, CacheableOut]):
       
       return self._out # type: ignore
     
-    self._out = super().build(use_cache, silent, show_progress)
+    self._out = super().build(use_cache, silent, show_progress, _progress=progress)
     
     return self._out
   
-  def changed(self) -> bool:
-    self._changed = self._config_changed() or self._changed
-    
-    return self._changed or any([dep.changed() for dep in self.depends])
   
-  def _config_changed(self) -> bool:
-    conf_path = os.path.join(self.cache_path, 'config.json')
-        
-    if os.path.exists(conf_path):
-      with open(conf_path, 'r') as conf_file:
-        contents = json.load(conf_file, object_hook=self._conf_decoder())
-        
-        return contents != self.conf
-    
-    return True
   
   

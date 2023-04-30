@@ -9,9 +9,8 @@ from mcpipeline.util.progress import ProgressFactory
 from mcpipeline.util.logger import Logger
 
 class Entity:
-  @abstractmethod
   def save(self, cache_path: str, progress: ProgressFactory):
-    raise NotImplementedError()
+    return
   
 class CacheableEntity(ABC, Entity):
   @staticmethod

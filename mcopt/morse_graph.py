@@ -95,11 +95,13 @@ class MorseGraph(nx.Graph):
   ) -> Dict[int, float]:
     colors = {}
     
+    c = np.asarray(coupling)
+    
     for n in self.nodes:
       i = coupling.dest_rev_map[n]
-      src_i = coupling[:, i].argmax()
+      src_i = c[:, i].argmax()
       
-      if (np.isclose(coupling[src_i, i], 0)):
+      if (np.isclose(c[src_i, i], 0)):
         colors[n] = np.nan
       else:
         src = coupling.src_map[src_i]
@@ -107,26 +109,6 @@ class MorseGraph(nx.Graph):
     
     return colors
   
-  def node_color_by_coupling_int(
-    self, 
-    src_node_color: Dict[int, float],
-    coupling: Coupling
-  ) -> Dict[int, float]:
-    colors = {}
-    
-    for n in self.nodes:
-      dest_i = coupling.dest_rev_map[n]
-      
-      colors[n] = 0
-      for src, src_color in src_node_color.items():
-        src_i = coupling.src_rev_map[src]
-        
-        colors[n] += coupling[src_i, dest_i] * src_color
-        
-      colors[n] /= coupling.shape[0]  
-    
-    return colors
-
   def draw(
     self,
     ax: matplotlib.axes.Axes,
@@ -179,7 +161,7 @@ class MorseGraph(nx.Graph):
       **kwargs
     )
     
-    ax.set_aspect('equal', adjustable='datalim')
+    ax.set_aspect('equal', adjustable='box')
   
   def to_mpn(self, hist: str = 'uniform', dist: str = 'step') -> MetricProbabilityNetwork:
     X = np.array(self.nodes())

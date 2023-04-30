@@ -59,24 +59,29 @@ class AttributesRule(Rule[AttributesConf, Attributes]):
     normalize: bool,
     progress: ProgressFactory
   ) -> Attributes:
-    attrs = np.empty(shape = (len(graph.frames), len(graph.frames)), dtype=object)
+    attrs = np.full(shape = (len(graph.frames), len(graph.frames)), fill_value=None, dtype=object)
     
     index_map = {}
     
     with progress(
-      total = len(graph.frames) ** 2,
+      total = len(graph.frames) ** 2 // 2,
       desc='constructing attributes',
     ) as prog:
       for i, (t, src) in enumerate(graph.frames.items()):
         index_map[t] = i
         
         for j, dest in enumerate(graph.frames.values()):
+          if attrs[i, j] is not None:
+            continue
+          
           if i == j:
             attrs[i, j] = np.zeros(1)
+            attrs[j, i] = np.zeros(1)
             prog.update()
             continue
           
           attrs[i, j] = MorseGraph.attribute_cost_matrix(src, dest)
+          attrs[j, i] = attrs[i, j].T
           prog.update()
     
     if normalize:

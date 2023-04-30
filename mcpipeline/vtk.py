@@ -98,6 +98,18 @@ class WarpFilter(VTKFilter):
     
     return warp
   
+# class Tetrahedralize(VTKFilter):
+#   filter_ty = 'tetra'
+  
+#   def __init__(self):
+#     super().__init__(args={})
+    
+#   def __call__(self, input: vtk.vtkAlgorithmOutput) -> vtk.vtkAlgorithm:
+#     tetra = vtk.vtkDataSetTriangleFilter() # type: ignore
+#     tetra.SetInputConnection(input)
+    
+#     return tetra
+  
 class BoxClipFilter(VTKFilter):
   filter_ty = 'boxclip'
   
@@ -139,6 +151,49 @@ class BoxClipFilter(VTKFilter):
     )
     
     return box_clip
+  
+class ImageClipFilter(VTKFilter):
+  filter_ty = 'image_clip'
+  
+  xmin: int
+  xmax: int
+  ymin: int
+  ymax: int
+  zmin: int
+  zmax: int
+  
+  def __init__(
+    self,
+    xmin: int,
+    xmax: int,
+    ymin: int,
+    ymax: int,
+    zmin: int,
+    zmax: int 
+  ):
+    self.xmin = xmin
+    self.xmax = xmax
+    self.ymin = ymin
+    self.ymax = ymax
+    self.zmin = zmin
+    self.zmax = zmax
+    
+    super().__init__(args = dict(xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax, zmin=zmin, zmax=zmax))
+    
+  def __call__(self, input: vtk.vtkAlgorithmOutput) -> vtk.vtkAlgorithm:
+    clip = vtk.vtkImageClip()
+    clip.SetInputConnection(input)
+    clip.SetOutputWholeExtent(
+      self.xmin, 
+      self.xmax, 
+      self.ymin, 
+      self.ymax, 
+      self.zmin, 
+      self.zmax
+    )
+    clip.ClipDataOn()
+    
+    return clip
 
 class TranslateFilter(VTKFilter):
   filter_ty = 'translate'
@@ -172,7 +227,7 @@ class VTKFilterEncoder(json.JSONEncoder):
     
     return json.JSONEncoder.default(self, o)
 
-VTK_FILTERS = [WarpFilter, BoxClipFilter, TranslateFilter]
+VTK_FILTERS = [WarpFilter, BoxClipFilter, TranslateFilter, ImageClipFilter]
 
 def VTKFilterDecoder(dct):
   if '__vtk_filter__' in dct:

@@ -1,4 +1,6 @@
 
+from __future__ import annotations
+
 import numpy as np
 from numpy.typing import ArrayLike
 
@@ -44,20 +46,18 @@ class MetricProbabilityNetwork(MetricMeasureNetwork):
     
     assert np.isclose(self.measure.sum(), 1), "Measure must sum to one."
    
-class Coupling(np.ndarray):  
-  def __new__(cls, raw: np.ndarray, X: Space, Y: Space):
-    obj = np.asarray(raw, dtype=float).view(cls)    
-    obj.src_map = {i : n for i, n in enumerate(X)}
-    obj.src_rev_map = {n : i for i, n in enumerate(X)}
-    obj.dest_map = {i : n for i, n in enumerate(X)}
-    obj.dest_rev_map = {n : i for i, n in enumerate(Y)}
+class Coupling:  
+  def __init__(self, raw: np.ndarray, X: Space, Y: Space):
+    self.raw = raw
+    self.src_space = X 
+    self.src_map = {i : n for i, n in enumerate(X)}
+    self.src_rev_map = {n : i for i, n in enumerate(X)}
+    self.dest_space = Y
+    self.dest_map = {i : n for i, n in enumerate(X)}
+    self.dest_rev_map = {n : i for i, n in enumerate(Y)}
     
-    return obj
-  
-  def __array_finalize__(self, obj):
-    if obj is None: return
+  def __array__(self):
+    return self.raw
     
-    self.src_map = getattr(obj, 'src_map', None)
-    self.src_map = getattr(obj, 'src_rev_map', None)
-    self.dest_map = getattr(obj, 'dest_map', None)
-    self.dest_map = getattr(obj, 'dest_rev_map', None)
+  def reverse(self) -> Coupling:
+    return Coupling(self.raw.T, self.dest_space, self.src_space)

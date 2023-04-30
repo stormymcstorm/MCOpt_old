@@ -16,16 +16,18 @@ from mcpipeline.targets.graph import Graph, GraphTarget
 from mcpipeline.targets.attributes import Attributes, AttributesTarget
 from mcpipeline.util import ProgressFactory
 
-__all__ = ['MaxMatch', 'MaxMatchPfGWTarget', 'MaxMatchWassersteinTarget']
+__all__ = ['MaxMatch', 'MaxMatchPfGWTarget', 'MaxMatchPWTarget', 'MaxMatchPGWTarget']
 
 def _max_match(src, dest, coupling):
   max_match_dist = 0
+  
+  c = np.asarray(coupling)
     
   for dest_n in dest.nodes:
     dest_i = coupling.dest_rev_map[dest_n]
-    src_i = coupling[:, dest_i].argmax()
+    src_i = c[:, dest_i].argmax()
     
-    if np.isclose(coupling[src_i, dest_i], 0):
+    if np.isclose(c[src_i, dest_i], 0):
       continue
     
     src_n = coupling.src_map[src_i]
@@ -98,6 +100,8 @@ class MaxMatchPfGWRule(Rule[MaxMatchPfGWConf, MaxMatch]):
     
     results = np.zeros(shape=(len(ms), len(dest_graphs)))
     
+    rng = np.random.default_rng(random_state)
+    
     with progress(
       total = len(ms) * len(dest_graphs) * (1 if num_random_iter is None else num_random_iter),
       desc = 'calculating max match results'
@@ -113,30 +117,34 @@ class MaxMatchPfGWRule(Rule[MaxMatchPfGWConf, MaxMatch]):
         for m_i, m in enumerate(ms):
           # print(f'm = {m}')
           
-          if num_random_iter is not None:
-            min_dist = float('inf')
-            min_coupling = None
-            
-            for _ in range(num_random_iter):
-              if np.isclose(m, 1):
-                c, d = ot.fGW(src_net, dest_net, M=M, alpha=alpha, random_G0=True, random_state=random_state)
-              else:
-                c, d = ot.pfGW(src_net, dest_net, m=m, M=M, alpha=alpha, random_G0=True, random_state=random_state)
+          try:
+            if num_random_iter is not None:
+              min_dist = float('inf')
+              min_coupling = None
               
-              if d < min_dist:
-                min_dist = d
-                min_coupling = c
+              for _ in range(num_random_iter):
+                if np.isclose(m, 1):
+                  c, d = ot.fGW(src_net, dest_net, M=M, alpha=alpha, random_G0=True, random_state=rng)
+                else:
+                  c, d = ot.pfGW(src_net, dest_net, m=m, M=M, alpha=alpha, random_G0=True, random_state=rng)
                 
-              prog.update()
-            
-            coupling = min_coupling
-          else:
-            if np.isclose(m, 1):
-              coupling, _ = ot.fGW(src_net, dest_net, M=M, alpha=alpha, random_G0=False)
+                if d < min_dist:
+                  min_dist = d
+                  min_coupling = c
+                  
+                prog.update()
+              
+              coupling = min_coupling
             else:
-              coupling, _ = ot.pfGW(src_net, dest_net, m=m, M=M, alpha=alpha, random_G0=False)
-            
-            prog.update()
+              if np.isclose(m, 1):
+                coupling, _ = ot.fGW(src_net, dest_net, M=M, alpha=alpha, random_G0=False)
+              else:
+                coupling, _ = ot.pfGW(src_net, dest_net, m=m, M=M, alpha=alpha, random_G0=False)
+              
+              prog.update()
+          except(ValueError):
+            print(f'Failed for m={m}')
+            raise
           
           results[m_i, dest_i] = _max_match(src_graph, dest_graph, coupling)
 
@@ -190,7 +198,7 @@ class MaxMatchPfGWTarget(CacheableTarget[MaxMatchPfGWConf, MaxMatch]):
       **kwargs,
     )
     
-class MaxMatchWassersteinRule(Rule[MaxMatchConf, MaxMatch]):
+class MaxMatchPWRule(Rule[MaxMatchConf, MaxMatch]):
   def __call__(
     self, 
     network: MMNetwork,
@@ -212,6 +220,8 @@ class MaxMatchWassersteinRule(Rule[MaxMatchConf, MaxMatch]):
     
     results = np.zeros(shape=(len(ms), len(dest_graphs)))
     
+    rng = np.random.default_rng(random_state)
+    
     with progress(
       total = len(ms) * len(dest_graphs) * (1 if num_random_iter is None else num_random_iter),
       desc = 'calculating max match results'
@@ -227,36 +237,40 @@ class MaxMatchWassersteinRule(Rule[MaxMatchConf, MaxMatch]):
         for m_i, m in enumerate(ms):
           # print(f'm = {m}')
           
-          if num_random_iter is not None:
-            min_dist = float('inf')
-            min_coupling = None
-            
-            for _ in range(num_random_iter):
-              if np.isclose(m, 1):
-                c, d = ot.Wasserstein(src_net, dest_net, M=M, random_G0=True, random_state=random_state)
-              else:
-                c, d = ot.pWasserstein(src_net, dest_net, m=m, M=M, random_G0=True, random_state=random_state)
+          try:
+            if num_random_iter is not None:
+              min_dist = float('inf')
+              min_coupling = None
               
-              if d < min_dist:
-                min_dist = d
-                min_coupling = c
+              for _ in range(num_random_iter):
+                if np.isclose(m, 1):
+                  c, d = ot.Wasserstein(src_net, dest_net, M=M, random_G0=True, random_state=rng)
+                else:
+                  c, d = ot.pWasserstein(src_net, dest_net, m=m, M=M, random_G0=True, random_state=rng)
                 
-              prog.update()
-            
-            coupling = min_coupling
-          else:
-            if np.isclose(m, 1):
-              coupling, _ = ot.Wasserstein(src_net, dest_net, M=M, random_G0=False)
+                if d < min_dist:
+                  min_dist = d
+                  min_coupling = c
+                  
+                prog.update()
+              
+              coupling = min_coupling
             else:
-              coupling, _ = ot.pWasserstein(src_net, dest_net, m=m, M=M, random_G0=False)
-            
-            prog.update()
+              if np.isclose(m, 1):
+                coupling, _ = ot.Wasserstein(src_net, dest_net, M=M, random_G0=False)
+              else:
+                coupling, _ = ot.pWasserstein(src_net, dest_net, m=m, M=M, random_G0=False)
+              
+              prog.update()
+          except (ValueError):
+            print(f'Failed for m={m}')
+            raise
           
           results[m_i, dest_i] = _max_match(src_graph, dest_graph, coupling)
 
     return MaxMatch(ms, results)
 
-class MaxMatchWassersteinTarget(CacheableTarget[MaxMatchPfGWConf, MaxMatch]):
+class MaxMatchPWTarget(CacheableTarget[MaxMatchPfGWConf, MaxMatch]):
   @staticmethod
   def target_type() -> str:
     return 'max_match'
@@ -289,7 +303,7 @@ class MaxMatchWassersteinTarget(CacheableTarget[MaxMatchPfGWConf, MaxMatch]):
     super().__init__(
       name = name,
       cache_path = cache_path,
-      rule = MaxMatchWassersteinRule(),
+      rule = MaxMatchPWRule(),
       conf = {
         'ms': ms,
         'num_random_iter': num_random_iter,
@@ -297,6 +311,98 @@ class MaxMatchWassersteinTarget(CacheableTarget[MaxMatchPfGWConf, MaxMatch]):
         'src_t': src_t,
       },
       depends = [network, graph, attributes],
+      display_name = display_name,
+      desc = desc,
+      **kwargs,
+    )
+    
+class MaxMatchPGWRule(Rule[MaxMatchConf, MaxMatch]):
+  def __call__(
+    self, 
+    network: MMNetwork,
+    graph: Graph,
+    ms: List[float],
+    src_t: int,
+    num_random_iter: int | None,
+    random_state: int | None,
+    progress: ProgressFactory
+  ) -> MaxMatch:
+    src_graph = graph.frames[src_t]
+    dest_graphs = graph.frames.copy()
+    dest_graphs.pop(src_t)
+    
+    src_net = network.frames[src_t]
+    dest_nets = network.frames.copy()
+    dest_nets.pop(src_t)
+    
+    results = np.zeros(shape=(len(ms), len(dest_graphs)))
+    
+    rng = np.random.default_rng(random_state)
+    
+    with progress(
+      total = len(ms) * len(dest_graphs) * (1 if num_random_iter is None else num_random_iter),
+      desc = 'calculating max match results'
+    ) as prog:
+      for dest_i, (t, dest_graph) in enumerate(dest_graphs.items()):
+        dest_net = dest_nets[t]
+        
+        for m_i, m in enumerate(ms):
+          # print(f'm = {m}')
+          try:
+            if np.isclose(m, 1):
+              coupling, d = ot.GW(src_net, dest_net, random_G0=False)
+            else:
+              coupling, d = ot.pGW(src_net, dest_net, m=m, random_G0=False)
+            
+            prog.update()
+            
+            results[m_i, dest_i] = d
+          except (ValueError):
+            print(f'Failed for m = {m}')
+            raise
+
+    return MaxMatch(ms, results)
+
+class MaxMatchPGWTarget(CacheableTarget[MaxMatchPfGWConf, MaxMatch]):
+  @staticmethod
+  def target_type() -> str:
+    return 'max_match'
+  
+  @staticmethod
+  def entity_type() -> type[MaxMatch]:
+    return MaxMatch
+  
+  def __init__(
+    self, 
+    name: str,
+    cache_path: str,
+    network: MMNetworkTarget,
+    graph: GraphTarget,
+    ms: List[float],
+    src_t: int,
+    num_random_iter: int | None = None,
+    random_state: int | None = None,
+    display_name: str | None = None,
+    desc: str | None = None,
+    **kwargs,
+  ):
+    if display_name is None:
+      display_name = graph.display_name
+    
+    if desc is None:
+      desc = graph.desc
+    
+    super().__init__(
+      name = name,
+      cache_path = cache_path,
+      rule = MaxMatchPGWRule(),
+      conf = {
+        'ms': ms,
+        'num_random_iter': num_random_iter,
+        'random_state': random_state,
+        'src_t': src_t,
+      },
+      depends = [network, graph],
       display_name = display_name,
       desc = desc,
       **kwargs,

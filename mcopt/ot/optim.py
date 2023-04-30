@@ -233,7 +233,8 @@ def cg(a, b, M, reg, f, df, G0=None, numItermax=500, stopThr=1e-09,
     # problem linearization
     Mi = M + reg * df(G) #Gradient(xt)
     # set M positive
-    Mi += Mi.min()
+    if Mi.min() < 0:
+      Mi -= Mi.min()
 
     # solve linear program
     Gc = emd(a, b, Mi) #st
@@ -387,7 +388,10 @@ def partial_cg(
     G_prev = G.copy()
     
     Mi = M + reg * df(G)
-    Mi += Mi.min()
+    if Mi.min() < 0:
+      Mi -= Mi.min()
+    # if np.allclose(Mi, 0):
+    #   Mi += 1e-5
     
     M_emd = np.zeros(dim_G_extended)
     M_emd[:len(a), :len(b)] = Mi
@@ -408,6 +412,9 @@ def partial_cg(
                        " number of dummy points")
       
     if nb_dummies > 0 and np.any(Gcemd[-nb_dummies:, -nb_dummies:] > 1e-16):
+      print(np.max(Mi))
+      print(np.min(Mi))
+      print(Gcemd[-nb_dummies:, -nb_dummies:].max())
       raise ValueError("Solution from EMD is illegal: G[-nb_dummies:, -nb_dummies] > 0!")
 
     Gc = Gcemd[:len(a), :len(b)]
