@@ -19,8 +19,8 @@ dependencies = [
   "POT"
 ]
 
-[project.scripts]
-mcpipeline = "mcopt.pipeline:main"
+# [project.scripts]
+# mcpipeline = "mcpipeline.main:main"
 
 [tool.setuptools]
-packages = ["mcopt"]
+packages = ["mcopt", "mcpipeline"]
