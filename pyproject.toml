@@ -16,8 +16,7 @@ dependencies = [
   "matplotlib",
   "tqdm",
   "networkx",
-  "seaborn",
-  "torch"
+  "POT"
 ]
 
 # [project.scripts]
