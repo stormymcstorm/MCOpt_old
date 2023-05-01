@@ -45,11 +45,9 @@ class MaxMatchFigureRule(Rule[MaxMatchFigureConf, Figure]):
     ax.add_line(Line2D([xmin, x[i]], [y[i], y[i]], color='grey', linestyle='--'))
     ax.plot(x[i], y[i], marker='o')
 
-    ax.set_xlabel('m', fontsize=10)
-    ax.set_ylabel('Max Match Distance', fontsize=10)
-    
     ax.set_xticks([x.min(), x[i], x.max()])
     ax.set_yticks([y.min(), y[i], y.max()])
+    ax.tick_params('both', labelsize=16)
     
     return Figure({0 : fig}, output_path, output_fmt, savefig_kwargs)
   
