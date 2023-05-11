@@ -15,6 +15,11 @@ from mcopt.mm_space import (
 
 Colors = ArrayLike | Dict[int, float]
 
+__all__ = [
+  'Colors',
+  'MorseGraph'
+]
+
 if 'black' not in matplotlib.colormaps:
   matplotlib.colormaps.register(matplotlib.colors.ListedColormap(['black']), name='black')
 

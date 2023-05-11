@@ -17,7 +17,6 @@ source .venv/bin/activate
 ```bash
 pip install -e .
 ```
-3. **Generate or retrieve the data**
 
 ## Experiments
 It is recommend that you use the include [devcontainer](https://code.visualstudio.com/docs/devcontainers/containers)

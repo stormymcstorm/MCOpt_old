@@ -1,14 +1,39 @@
-
+"""
+Definitions for Metric Measure Networks
+"""
 from __future__ import annotations
 
 import numpy as np
 from numpy.typing import ArrayLike
+
+__all__ = [
+  'Space', 
+  'Metric', 
+  'Measure', 
+  'MetricMeasureNetwork', 
+  'MetricProbabilityNetwork',
+  'Coupling'
+]
 
 Space = ArrayLike
 Metric = ArrayLike
 Measure = ArrayLike
 
 class MetricMeasureNetwork:
+  """
+  A triple (V, p, W) where V is the space of nodes, p is a discrete measure on V,
+  and W is a metric on V.
+  
+  Parameters
+  ----------
+  space: arraylike, shape (ns)
+    The space of nodes
+  measure: arraylike, shape (ns)
+    The dirac measure for each nodes in the same order as `space`.
+  metric: arraylike, shape (ns, ns)
+    A metric cost matrix for each pair nodes in the same order as `space`.
+  """
+  
   space: np.ndarray
   measure: np.ndarray
   metric: np.ndarray
@@ -32,6 +57,19 @@ class MetricMeasureNetwork:
     assert self.metric.shape[1] == len(self.space)
     
 class MetricProbabilityNetwork(MetricMeasureNetwork):
+  """
+  A `MetricMeasureNetwork` in which the measure of the space is `1`.
+  
+  Parameters
+  ----------
+  space: arraylike, shape (ns)
+    The space of nodes
+  measure: arraylike, shape (ns)
+    The dirac probability measure for each nodes in the same order as `space`.
+  metric: arraylike, shape (ns, ns)
+    A metric cost matrix for each pair nodes in the same order as `space`.
+  """
+  
   space: np.ndarray
   measure: np.ndarray
   metric: np.ndarray
@@ -46,7 +84,20 @@ class MetricProbabilityNetwork(MetricMeasureNetwork):
     
     assert np.isclose(self.measure.sum(), 1), "Measure must sum to one."
    
-class Coupling:  
+class Coupling:
+  """
+  A coupling matrix. Includes references to the source and destination spaces.
+  
+  Parameters
+  ----------
+  raw: arraylike, shape (ns, nr)
+    The raw coupling matrix
+  X: arraylike, shape (ns)
+    The source space
+  Y: arraylike, shape (nr)
+    The destination space
+  """
+  
   def __init__(self, raw: np.ndarray, X: Space, Y: Space):
     self.raw = raw
     self.src_space = X 
