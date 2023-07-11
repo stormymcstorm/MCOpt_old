@@ -1,10 +1,5 @@
 matplotlib
 networkx
 numpy
-pandas
-POT
-scikit-image
-scipy
-tqdm
 ipykernel
 ipywidgets
