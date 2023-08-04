@@ -1,5 +1,7 @@
 from __future__ import annotations
 from typing import Set, Dict, Optional
+from inspect import signature
+
 
 import numpy as np
 from numpy.typing import ArrayLike
@@ -117,6 +119,102 @@ class MorseGraph(nx.Graph):
   def draw(
     self,
     ax: matplotlib.axes.Axes,
+    cmap = 'black',
+    rotation: float = 0,
+    node_size: int = 40,
+    node_color: Optional[Colors] = None,
+    **kwargs
+  ):
+    # Validate kwargs
+    valid_node_kwargs = signature(nx.draw_networkx_nodes).parameters.keys()
+    valid_edge_kwargs = signature(nx.draw_networkx_edges).parameters.keys()
+
+    valid_kwargs = valid_node_kwargs | valid_edge_kwargs - {
+      "G",
+      "pos",
+      "with_labels",
+      "node_shape",
+      "alpha"
+
+      "node_size",
+      "node_color",
+      "cmap",
+    }
+
+    if any(k not in valid_kwargs for k in kwargs):
+      invalid_args = ", ".join([k for k in kwargs if k not in valid_kwargs])
+      raise ValueError(f"Received invalid argument(s): {invalid_args}")
+    
+    node_kwargs = {k: v for k, v in kwargs.items() if k in valid_node_kwargs}
+    edge_kwargs = {k: v for k, v in kwargs.items() if k in valid_edge_kwargs}
+
+    # Preprocess node_color
+    if not node_color:
+      node_color = self.node_color_by_position()
+
+    # Determine unmapped nodes
+    unmapped = {n for n in self.nodes() if np.isnan(node_color[n])}
+    unmapped_node_color = np.array([node_color[n] for n in self.nodes() if n in unmapped])
+
+    mapped = set(self.nodes()) - unmapped
+    mapped_node_color = np.array([node_color[n] for n in self.nodes() if n in mapped])
+
+    unmapped = [n for n in self.nodes() if n in unmapped]
+    mapped = [n for n in self.nodes() if n in mapped]
+
+    # Preprocess positions
+    pos = dict(self.nodes(data = 'pos2'))
+
+    if not np.isclose(rotation, 0):
+      theta = np.radians(rotation)
+
+      r = np.array([
+        [np.cos(theta), -np.sin(theta)],
+        [np.sin(theta), np.cos(theta)],
+      ])
+      
+      pos = {n : r.dot(p) for n, p in pos.items()}
+
+    nx.draw_networkx_edges(
+      self,
+      ax = ax,
+      pos=pos,
+      **edge_kwargs
+    )
+
+    if len(unmapped):
+      nx.draw_networkx_nodes(
+        self,
+        ax = ax,
+        pos = pos,
+        node_color = 'white',
+        edgecolors='black',
+        node_size=node_size,
+        nodelist = list(unmapped),
+        cmap = cmap,
+        alpha=[1],
+        **node_kwargs
+      )
+
+    if len(mapped):
+      nx.draw_networkx_nodes(
+        self,
+        ax = ax,
+        pos = pos,
+        node_color = mapped_node_color,
+        node_size=node_size,
+        nodelist = list(mapped),
+        cmap = cmap,
+        alpha=[1],
+        **node_kwargs
+      )
+
+    ax.set_axis_off()
+    ax.set_aspect('equal', adjustable='box')
+
+  def _draw(
+    self,
+    ax: matplotlib.axes.Axes,
     cmap='black',
     node_color: Optional[Colors] = None,
     node_size: int = 40,
@@ -129,29 +227,29 @@ class MorseGraph(nx.Graph):
       
     if type(node_color) is dict:
       node_color = np.array([node_color[n] for n in self.nodes()])
-    
+
     node_size = np.array([
       node_size * critical_scale if n in self.critical_nodes else node_size
       for n in self.nodes()
     ])
-    
+
     # Allow for nodes that should be given a "bad color" to have `nan` values.
     vmin = np.nanmin(node_color)
     vmax = np.nanmax(node_color)
-    
+
     # Transform positions
     pos = {n : p for n, p in self.nodes(data='pos2')}
-    
+
     if rotation != 0:
       theta = np.radians(rotation)
       
       r = np.array([
-        [np.cos(theta), -np.sin(theta)],
-        [np.sin(theta), np.cos(theta)],
+      [np.cos(theta), -np.sin(theta)],
+      [np.sin(theta), np.cos(theta)],
       ])
       
       pos = {n : r.dot(p) for n, p in pos.items()}
-    
+
     nx.draw(
       self,
       ax=ax,
@@ -165,7 +263,7 @@ class MorseGraph(nx.Graph):
       alpha=[1],
       **kwargs
     )
-    
+
     ax.set_aspect('equal', adjustable='box')
   
   def to_mpn(self, hist: str = 'uniform', dist: str = 'step') -> MetricProbabilityNetwork:

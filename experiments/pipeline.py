@@ -24,6 +24,8 @@ savefig_kwargs_combined = dict(
   bbox_inches = 'tight',
 )
 
+cmap = 'brg'
+
 n_neighbors = 5
 
 ################################################################################
@@ -710,6 +712,7 @@ def heated_cylinder(pipeline: Pipeline, fig_path: str):
     src_t = 800,
     rotation = rotation,
     output_path = fig_path,
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs
   )
   
@@ -724,6 +727,7 @@ def heated_cylinder(pipeline: Pipeline, fig_path: str):
     ncols = ncols,
     output_path = fig_path,
     output_fmt = 'heated_cylinder_gw.png',
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs_combined
   )
 
@@ -742,6 +746,7 @@ def heated_cylinder(pipeline: Pipeline, fig_path: str):
     src_t = 800,
     rotation = rotation,
     output_path = fig_path,
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs
   )
   
@@ -756,6 +761,7 @@ def heated_cylinder(pipeline: Pipeline, fig_path: str):
     ncols = ncols,
     output_path = fig_path,
     output_fmt = 'heated_cylinder_fgw.png',
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs_combined
   )
 
@@ -774,6 +780,7 @@ def heated_cylinder(pipeline: Pipeline, fig_path: str):
     src_t = 800,
     rotation = rotation,
     output_path = fig_path,
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs
   )
   
@@ -788,6 +795,7 @@ def heated_cylinder(pipeline: Pipeline, fig_path: str):
     ncols = ncols,
     output_path = fig_path,
     output_fmt = 'heated_cylinder_w.png',
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs_combined
   )
 
@@ -807,6 +815,7 @@ def heated_cylinder(pipeline: Pipeline, fig_path: str):
     src_t = 800,
     rotation = rotation,
     output_path = fig_path,
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs
   )
   
@@ -821,6 +830,7 @@ def heated_cylinder(pipeline: Pipeline, fig_path: str):
     ncols = ncols,
     output_path = fig_path,
     output_fmt = 'heated_cylinder_pfgw.png',
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs_combined
   )
 
@@ -840,6 +850,7 @@ def heated_cylinder(pipeline: Pipeline, fig_path: str):
     src_t = 800,
     rotation = rotation,
     output_path = fig_path,
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs
   )
   
@@ -854,6 +865,7 @@ def heated_cylinder(pipeline: Pipeline, fig_path: str):
     ncols = ncols,
     output_path = fig_path,
     output_fmt = 'heated_cylinder_pw.png',
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs_combined
   )
 
@@ -872,6 +884,7 @@ def heated_cylinder(pipeline: Pipeline, fig_path: str):
     src_t = 800,
     rotation = rotation,
     output_path = fig_path,
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs
   )
   
@@ -886,6 +899,7 @@ def heated_cylinder(pipeline: Pipeline, fig_path: str):
     ncols = ncols,
     output_path = fig_path,
     output_fmt = 'heated_cylinder_pgw.png',
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs_combined
   )
 
@@ -1031,6 +1045,7 @@ def navier_stokes(pipeline: Pipeline, fig_path: str):
     src_t = 1,
     rotation = rotation,
     output_path = fig_path,
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs
   )
   
@@ -1044,6 +1059,7 @@ def navier_stokes(pipeline: Pipeline, fig_path: str):
     figsize = figsize,
     output_path = fig_path,
     output_fmt = 'navier_stokes_gw.png',
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs_combined
   )
 
@@ -1062,6 +1078,7 @@ def navier_stokes(pipeline: Pipeline, fig_path: str):
     src_t = 1,
     rotation = rotation,
     output_path = fig_path,
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs
   )
   
@@ -1075,6 +1092,7 @@ def navier_stokes(pipeline: Pipeline, fig_path: str):
     figsize = figsize,
     output_path = fig_path,
     output_fmt = 'navier_stokes_fgw.png',
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs_combined
   )
 
@@ -1093,6 +1111,7 @@ def navier_stokes(pipeline: Pipeline, fig_path: str):
     src_t = 1,
     rotation = rotation,
     output_path = fig_path,
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs
   )
   
@@ -1106,6 +1125,7 @@ def navier_stokes(pipeline: Pipeline, fig_path: str):
     figsize = figsize,
     output_path = fig_path,
     output_fmt = 'navier_stokes_w.png',
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs_combined
   )
 
@@ -1125,6 +1145,7 @@ def navier_stokes(pipeline: Pipeline, fig_path: str):
     src_t = 1,
     rotation = rotation,
     output_path = fig_path,
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs
   )
   
@@ -1138,6 +1159,7 @@ def navier_stokes(pipeline: Pipeline, fig_path: str):
     figsize = figsize,
     output_path = fig_path,
     output_fmt = 'navier_stokes_pfgw.png',
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs_combined
   )
 
@@ -1157,6 +1179,7 @@ def navier_stokes(pipeline: Pipeline, fig_path: str):
     src_t = 1,
     rotation = rotation,
     output_path = fig_path,
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs
   )
   
@@ -1170,6 +1193,7 @@ def navier_stokes(pipeline: Pipeline, fig_path: str):
     figsize = figsize,
     output_path = fig_path,
     output_fmt = 'navier_stokes_pw.png',
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs_combined
   )
 
@@ -1188,6 +1212,7 @@ def navier_stokes(pipeline: Pipeline, fig_path: str):
     src_t = 1,
     rotation = rotation,
     output_path = fig_path,
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs
   )
   
@@ -1201,6 +1226,7 @@ def navier_stokes(pipeline: Pipeline, fig_path: str):
     figsize = figsize,
     output_path = fig_path,
     output_fmt = 'navier_stokes_pgw.png',
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs_combined
   )
 
@@ -1345,6 +1371,7 @@ def red_sea(pipeline: Pipeline, fig_path: str):
     src_t = 1,
     rotation = rotation,
     output_path = fig_path,
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs
   )
   
@@ -1358,6 +1385,7 @@ def red_sea(pipeline: Pipeline, fig_path: str):
     figsize = figsize,
     output_path = fig_path,
     output_fmt = 'red_sea_gw.png',
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs_combined
   )
 
@@ -1376,6 +1404,7 @@ def red_sea(pipeline: Pipeline, fig_path: str):
     src_t = 1,
     rotation = rotation,
     output_path = fig_path,
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs
   )
   
@@ -1389,6 +1418,7 @@ def red_sea(pipeline: Pipeline, fig_path: str):
     figsize = figsize,
     output_path = fig_path,
     output_fmt = 'red_sea_fgw.png',
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs_combined
   )
 
@@ -1407,6 +1437,7 @@ def red_sea(pipeline: Pipeline, fig_path: str):
     src_t = 1,
     rotation = rotation,
     output_path = fig_path,
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs
   )
   
@@ -1420,6 +1451,7 @@ def red_sea(pipeline: Pipeline, fig_path: str):
     figsize = figsize,
     output_path = fig_path,
     output_fmt = 'red_sea_w.png',
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs_combined
   )
 
@@ -1439,6 +1471,7 @@ def red_sea(pipeline: Pipeline, fig_path: str):
     src_t = 1,
     rotation = rotation,
     output_path = fig_path,
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs
   )
   
@@ -1452,6 +1485,7 @@ def red_sea(pipeline: Pipeline, fig_path: str):
     figsize = figsize,
     output_path = fig_path,
     output_fmt = 'red_sea_pfgw.png',
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs_combined
   )
 
@@ -1471,6 +1505,7 @@ def red_sea(pipeline: Pipeline, fig_path: str):
     src_t = 1,
     rotation = rotation,
     output_path = fig_path,
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs
   )
   
@@ -1484,6 +1519,7 @@ def red_sea(pipeline: Pipeline, fig_path: str):
     figsize = figsize,
     output_path = fig_path,
     output_fmt = 'red_sea_pw.png',
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs_combined
   )
 
@@ -1502,6 +1538,7 @@ def red_sea(pipeline: Pipeline, fig_path: str):
     src_t = 1,
     rotation = rotation,
     output_path = fig_path,
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs
   )
   
@@ -1515,6 +1552,7 @@ def red_sea(pipeline: Pipeline, fig_path: str):
     figsize = figsize,
     output_path = fig_path,
     output_fmt = 'red_sea_pgw.png',
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs_combined
   )
 
@@ -1662,6 +1700,7 @@ def sinusoidal(pipeline: Pipeline, fig_path: str):
     couplings = gw,
     src_t = 0,
     output_path = fig_path,
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs
   )
   
@@ -1679,6 +1718,7 @@ def sinusoidal(pipeline: Pipeline, fig_path: str):
     couplings = fgw,
     src_t = 0,
     output_path = fig_path,
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs
   )
   
@@ -1696,6 +1736,7 @@ def sinusoidal(pipeline: Pipeline, fig_path: str):
     couplings = wasserstein,
     src_t = 0,
     output_path = fig_path,
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs
   )
   
@@ -1714,6 +1755,7 @@ def sinusoidal(pipeline: Pipeline, fig_path: str):
     couplings = pfgw,
     src_t = 0,
     output_path = fig_path,
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs
   )
   
@@ -1733,6 +1775,7 @@ def sinusoidal(pipeline: Pipeline, fig_path: str):
     couplings = pgw,
     src_t = 0,
     output_path = fig_path,
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs
   )
   
@@ -1751,6 +1794,7 @@ def sinusoidal(pipeline: Pipeline, fig_path: str):
     couplings = pw,
     src_t = 0,
     output_path = fig_path,
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs
   )
   
@@ -1912,6 +1956,7 @@ def tangaroa(pipeline: Pipeline, fig_path: str):
     src_t = 51,
     rotation = rotation,
     output_path = fig_path,
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs
   )
   
@@ -1925,6 +1970,7 @@ def tangaroa(pipeline: Pipeline, fig_path: str):
     figsize = figsize,
     output_path = fig_path,
     output_fmt = 'tangaroa_gw.png',
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs_combined
   )
 
@@ -1943,6 +1989,7 @@ def tangaroa(pipeline: Pipeline, fig_path: str):
     src_t = 51,
     rotation = rotation,
     output_path = fig_path,
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs
   )
   
@@ -1956,6 +2003,7 @@ def tangaroa(pipeline: Pipeline, fig_path: str):
     figsize = figsize,
     output_path = fig_path,
     output_fmt = 'tangaroa_fgw.png',
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs_combined
   )
 
@@ -1974,6 +2022,7 @@ def tangaroa(pipeline: Pipeline, fig_path: str):
     src_t = 51,
     rotation = rotation,
     output_path = fig_path,
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs
   )
   
@@ -1987,6 +2036,7 @@ def tangaroa(pipeline: Pipeline, fig_path: str):
     figsize = figsize,
     output_path = fig_path,
     output_fmt = 'tangaroa_w.png',
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs_combined
   )
 
@@ -2006,6 +2056,7 @@ def tangaroa(pipeline: Pipeline, fig_path: str):
     src_t = 51,
     rotation = rotation,
     output_path = fig_path,
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs
   )
   
@@ -2019,6 +2070,7 @@ def tangaroa(pipeline: Pipeline, fig_path: str):
     figsize = figsize,
     output_path = fig_path,
     output_fmt = 'tangaroa_pfgw.png',
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs_combined
   )
 
@@ -2038,6 +2090,7 @@ def tangaroa(pipeline: Pipeline, fig_path: str):
     src_t = 51,
     rotation = rotation,
     output_path = fig_path,
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs
   )
   
@@ -2051,6 +2104,7 @@ def tangaroa(pipeline: Pipeline, fig_path: str):
     figsize = figsize,
     output_path = fig_path,
     output_fmt = 'tangaroa_pw.png',
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs_combined
   )
 
@@ -2069,6 +2123,7 @@ def tangaroa(pipeline: Pipeline, fig_path: str):
     src_t = 51,
     rotation = rotation,
     output_path = fig_path,
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs
   )
   
@@ -2082,6 +2137,7 @@ def tangaroa(pipeline: Pipeline, fig_path: str):
     figsize = figsize,
     output_path = fig_path,
     output_fmt = 'tangaroa_pgw.png',
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs_combined
   )
 
@@ -2234,6 +2290,7 @@ def tropopause(pipeline: Pipeline, fig_path: str):
     src_t = 0,
     rotation = rotation,
     output_path = fig_path,
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs
   )
   
@@ -2247,6 +2304,7 @@ def tropopause(pipeline: Pipeline, fig_path: str):
     figsize = figsize,
     output_path = fig_path,
     output_fmt = 'tropopause_gw.png',
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs_combined
   )
 
@@ -2265,6 +2323,7 @@ def tropopause(pipeline: Pipeline, fig_path: str):
     src_t = 0,
     rotation = rotation,
     output_path = fig_path,
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs
   )
   
@@ -2278,6 +2337,7 @@ def tropopause(pipeline: Pipeline, fig_path: str):
     figsize = figsize,
     output_path = fig_path,
     output_fmt = 'tropopause_fgw.png',
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs_combined
   )
 
@@ -2296,6 +2356,7 @@ def tropopause(pipeline: Pipeline, fig_path: str):
     src_t = 0,
     rotation = rotation,
     output_path = fig_path,
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs
   )
   
@@ -2309,6 +2370,7 @@ def tropopause(pipeline: Pipeline, fig_path: str):
     figsize = figsize,
     output_path = fig_path,
     output_fmt = 'tropopause_w.png',
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs_combined
   )
 
@@ -2328,6 +2390,7 @@ def tropopause(pipeline: Pipeline, fig_path: str):
     src_t = 0,
     rotation = rotation,
     output_path = fig_path,
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs
   )
   
@@ -2341,6 +2404,7 @@ def tropopause(pipeline: Pipeline, fig_path: str):
     figsize = figsize,
     output_path = fig_path,
     output_fmt = 'tropopause_pfgw.png',
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs_combined
   )
 
@@ -2360,6 +2424,7 @@ def tropopause(pipeline: Pipeline, fig_path: str):
     src_t = 0,
     rotation = rotation,
     output_path = fig_path,
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs
   )
   
@@ -2373,6 +2438,7 @@ def tropopause(pipeline: Pipeline, fig_path: str):
     figsize = figsize,
     output_path = fig_path,
     output_fmt = 'tropopause_pw.png',
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs_combined
   )
 
@@ -2391,6 +2457,7 @@ def tropopause(pipeline: Pipeline, fig_path: str):
     src_t = 0,
     rotation = rotation,
     output_path = fig_path,
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs
   )
   
@@ -2404,6 +2471,7 @@ def tropopause(pipeline: Pipeline, fig_path: str):
     figsize = figsize,
     output_path = fig_path,
     output_fmt = 'tropopause_pgw.png',
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs_combined
   )
 
@@ -2558,6 +2626,7 @@ def wind(pipeline: Pipeline, fig_path: str):
     rotation = rotation,
     node_size = node_size,
     output_path = fig_path,
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs
   )
   
@@ -2572,6 +2641,7 @@ def wind(pipeline: Pipeline, fig_path: str):
     node_size = node_size,
     output_path = fig_path,
     output_fmt = 'wind_gw.png',
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs_combined
   )
 
@@ -2591,6 +2661,7 @@ def wind(pipeline: Pipeline, fig_path: str):
     rotation = rotation,
     node_size = node_size,
     output_path = fig_path,
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs
   )
   
@@ -2605,6 +2676,7 @@ def wind(pipeline: Pipeline, fig_path: str):
     node_size = node_size,
     output_path = fig_path,
     output_fmt = 'wind_fgw.png',
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs_combined
   )
 
@@ -2624,6 +2696,7 @@ def wind(pipeline: Pipeline, fig_path: str):
     rotation = rotation,
     node_size = node_size,
     output_path = fig_path,
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs
   )
   
@@ -2638,6 +2711,7 @@ def wind(pipeline: Pipeline, fig_path: str):
     node_size = node_size,
     output_path = fig_path,
     output_fmt = 'wind_w.png',
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs_combined
   )
 
@@ -2658,6 +2732,7 @@ def wind(pipeline: Pipeline, fig_path: str):
     rotation = rotation,
     node_size = node_size,
     output_path = fig_path,
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs
   )
   
@@ -2672,6 +2747,7 @@ def wind(pipeline: Pipeline, fig_path: str):
     output_path = fig_path,
     node_size = node_size,
     output_fmt = 'wind_pfgw.png',
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs_combined
   )
 
@@ -2692,6 +2768,7 @@ def wind(pipeline: Pipeline, fig_path: str):
     rotation = rotation,
     node_size = node_size,
     output_path = fig_path,
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs
   )
   
@@ -2706,6 +2783,7 @@ def wind(pipeline: Pipeline, fig_path: str):
     node_size = node_size,
     output_path = fig_path,
     output_fmt = 'wind_pw.png',
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs_combined
   )
 
@@ -2725,6 +2803,7 @@ def wind(pipeline: Pipeline, fig_path: str):
     rotation = rotation,
     node_size = node_size,
     output_path = fig_path,
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs
   )
   
@@ -2739,6 +2818,7 @@ def wind(pipeline: Pipeline, fig_path: str):
     node_size = node_size,
     output_path = fig_path,
     output_fmt = 'wind_pgw.png',
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs_combined
   )
 
@@ -2762,6 +2842,7 @@ def vortex_street(pipeline: Pipeline, fig_path: str):
     rotation = rotation,
     node_size = node_size,
     output_path = fig_path,
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs
   )
   
@@ -2773,6 +2854,7 @@ def vortex_street(pipeline: Pipeline, fig_path: str):
     node_size = node_size,
     figsize = figsize,
     output_path = fig_path,
+    cmap = cmap,
     savefig_kwargs = savefig_kwargs_combined
   )
   

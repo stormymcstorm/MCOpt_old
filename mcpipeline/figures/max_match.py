@@ -32,7 +32,7 @@ class MaxMatchFigureRule(Rule[MaxMatchFigureConf, Figure]):
     fig, ax = plt.subplots()
   
     x = np.asarray(max_match.ms)
-    y = max_match.results.max(axis=1)
+    y = np.nanmax(max_match.results, axis=1)
     
     ax.plot(x, y)
     

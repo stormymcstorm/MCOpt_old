@@ -8,6 +8,7 @@ import os
 
 import numpy as np
 from mcopt import MorseGraph, ot
+from mcopt.ot.optim import NonConvergenceError
 
 from mcpipeline.entity import CacheableEntity
 from mcpipeline.target import CacheableTarget, Rule
@@ -141,12 +142,12 @@ class MaxMatchPfGWRule(Rule[MaxMatchPfGWConf, MaxMatch]):
               else:
                 coupling, _ = ot.pfGW(src_net, dest_net, m=m, M=M, alpha=alpha, random_G0=False)
               
-              prog.update()
-          except(ValueError):
-            print(f'Failed for m={m}')
-            raise
+            results[m_i, dest_i] = _max_match(src_graph, dest_graph, coupling)
+          except(NonConvergenceError):
+            results[m_i, dest_i] = np.nan
           
-          results[m_i, dest_i] = _max_match(src_graph, dest_graph, coupling)
+          prog.update()
+            
 
     return MaxMatch(ms, results)
   
